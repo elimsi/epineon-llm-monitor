@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EPINEON AI | ESITH Challenge 2026 — Ultimate Version</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --bg:#03080f; --bg2:#060e1a; --glass:rgba(255,255,255,0.03); --glass2:rgba(255,255,255,0.06);
+            --border:rgba(0,212,255,0.12); --border2:rgba(0,212,255,0.4);
+            --cyan:#00d4ff; --purple:#7b2fff; --pink:#ff6b9d; --gold:#ffd700; --silver:#b8c8d8; --bronze:#cd9060;
+            --green:#00ff88; --red:#ff4d6d; --text:#dce8f8; --muted:#6a8aaa; --muted2:#4a6a8a;
+            --head:'Orbitron',sans-serif; --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;min-height:100vh;}
+        #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;}
+        .app{position:relative;z-index:10;max-width:1350px;margin:0 auto;padding:2rem;}
+        ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:3px;}
+
+        /* Card System */
+        .card{background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;transition:.35s;}
+        .card:hover{border-color:var(--border2);box-shadow:0 0 30px rgba(0,212,255,.1);}
+        .p-6{padding:1.6rem;}
+        
+        /* Header & HUD */
+        .header{text-align:center;padding:3.5rem 0 1.5rem;}
+        .badge{background:rgba(0,212,255,.08);border:1px solid var(--border);border-radius:50px;padding:.45rem 1.4rem;font-size:.68rem;color:var(--cyan);letter-spacing:.22em;text-transform:uppercase;margin-bottom:1.5rem;display:inline-block;}
+        .title{font-family:var(--head);font-size:clamp(2rem,5.5vw,4.2rem);font-weight:900;background:linear-gradient(135deg,#00d4ff,#7b2fff,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;margin-bottom:.8rem;filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.2));}
+        .subtitle{color:var(--muted);font-size:.95rem;font-weight:300;}
+
+        /* Sec Headers */
+        .sec{display:flex;align-items:center;gap:1rem;margin:2.5rem 0 1.2rem;}
+        .sec h2{font-family:var(--head);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:400;}
+        .sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+        /* 🤖 Terminal HUD */
+        #terminal-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:2rem;}
+        .terminal-box{width:100%;max-width:900px;height:70vh;background:#050a10;border:1px solid var(--border2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 50px rgba(0, 212, 255, 0.2);}
+        .terminal-header{background:#0a121d;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+        .terminal-title{font-family:var(--mono);font-size:0.75rem;color:var(--cyan);display:flex;align-items:center;gap:0.7rem;}
+        .terminal-body{flex:1;padding:1.2rem;overflow-y:auto;font-family:var(--mono);font-size:0.82rem;color:var(--text);line-height:1.6;background-image:radial-gradient(rgba(0,212,255,0.05) 1px, transparent 0);background-size:24px 24px;}
+        .log-entry{margin-bottom:0.25rem;animation:fadeIn 0.2s ease;}
+        .log-time{color:var(--muted2);margin-right:0.6rem;font-size:0.7rem;}
+
+        /* 🧮 Calculator HUD */
+        .calc-bar{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1.5rem;margin-bottom:2rem;background:rgba(0,212,255,0.03);padding:1.6rem;border-radius:24px;border:1px solid var(--border);}
+        .calc-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:0.8rem;display:flex;justify-content:space-between;align-items:center;}
+        .calc-label b{color:var(--cyan);font-family:var(--mono);font-size:0.85rem;}
+        input[type=range]{appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px;outline:none;}
+        input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;background:var(--cyan);border-radius:50%;cursor:pointer;box-shadow:0 0 10px var(--cyan);}
+
+        /* Profile Tabs */
+        .tabs{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+        .tab{background:var(--glass);border:1px solid var(--border);color:var(--muted);padding:.6rem 1.3rem;border-radius:12px;cursor:pointer;transition:.25s;font-family:var(--font);font-size:.78rem;}
+        .tab.on{background:rgba(0,212,255,0.15);border-color:var(--cyan);color:var(--cyan);font-weight:600;}
+
+        /* Podium */
+        .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;}
+        .pod{text-align:center;position:relative;overflow:hidden;transition:.4s cubic-bezier(.2,.8,.3,1.1);}
+        .pod-score{font-family:var(--head);font-size:2.8rem;font-weight:900;color:var(--cyan);margin-bottom:.2rem;text-shadow:0 0 15px rgba(0,212,255,0.3);}
+        .pod-name{font-size:1.1rem;font-weight:700;margin-bottom:.5rem;color:#fff;}
+        .pod-just{font-size:.66rem;color:var(--muted);font-style:italic;line-height:1.6;margin-bottom:1.2rem;min-height:3.2em;padding:0 0.8rem;}
+        .pod-stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;text-align:left;}
+        .ps{background:rgba(255,255,255,.03);padding:.6rem .8rem;border-radius:12px;border:1px solid rgba(255,255,255,.05);}
+        .ps-l{font-size:.52rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin-bottom:2px;}
+        .ps-v{font-size:.88rem;font-weight:600;font-family:var(--mono);}
+        .ps-forecast{grid-column: 1 / -1; background: rgba(0, 255, 136, 0.04); border-color: rgba(0, 255, 136, 0.12);}
+        .ps-forecast .ps-v{color: var(--green); font-size: 1.05rem;}
+
+        /* Offline HUD */
+        #offline{position:fixed;inset:0;background:rgba(3,8,15,.96);z-index:3000;display:none;align-items:center;justify-content:center;}
+        .btn{padding:.75rem 1.5rem;border-radius:14px;border:none;font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;transition:.22s;text-transform:uppercase;letter-spacing:0.05em;}
+        .btn-p{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;box-shadow:0 0 20px rgba(0,212,255,0.3);}
+        .btn-terminal{background:#0a121d;border:1px solid var(--border);color:var(--cyan);font-family:var(--mono);display:flex;align-items:center;gap:0.8rem;}
+
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+        .fade{animation:fadeIn 0.6s ease both;}
+        #three-container{width:100%;height:400px;border-radius:24px;border:1px solid var(--border);position:relative;background:#000;overflow:hidden;}
+        #three-tooltip{position:absolute;background:rgba(0,0,0,0.8);border:1px solid var(--cyan);padding:0.5rem;font-size:0.7rem;pointer-events:none;display:none;z-index:50;}
+
+        footer{text-align:center;padding:5rem 0 3rem;opacity:.4;font-size:.75rem;letter-spacing:0.08em;}
+    </style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<!-- 🤖 TERMINAL MODAL -->
+<div id="terminal-modal" onclick="if(event.target===this)closeTerminal()">
+    <div class="terminal-box">
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);"></span>
+                ENGINE CORE PIPELINE · ELITE VERSION v3.1.2
+            </div>
+            <div style="cursor:pointer;color:var(--muted2);" onclick="closeTerminal()">✕ CLOSE</div>
+        </div>
+        <div id="terminal-output" class="terminal-body">
+            <div class="log-entry"><span class="log-time">[BOOT]</span> EPINEON-AI Engine handshake successful. Monitoring connections...</div>
+        </div>
+    </div>
+</div>
+
+<div id="offline">
+    <div style="text-align:center;">
+        <h2 style="color:var(--red);font-family:var(--head);margin-bottom:1rem;">SYSTEM DISCONNECTED</h2>
+        <p style="color:var(--muted);margin-bottom:1.5rem;">The backend scoring engine is unreachable.</p>
+        <button onclick="location.reload()" class="btn btn-p">RECONNECT CORE</button>
+    </div>
+</div>
+
+<div class="app">
+    <header class="header fade">
+        <div class="badge">ESITH National Challenge 2026 · ELITE EDITION</div>
+        <h1 class="title">LLM INTELLIGENCE<br>CONTROL CENTER</h1>
+        <p class="subtitle">Mathematically Superior Decision Scaling via Entropy-Weighted VIKOR Math</p>
+    </header>
+
+    <!-- 🧮 COST FORECAST HUD -->
+    <div class="calc-bar fade">
+        <div style="padding-right:1rem; border-right:1px solid var(--border);">
+            <div class="calc-label">Monthly Prompt Tokens <b id="val-prompt">50M</b></div>
+            <input type="range" min="1" max="1000" value="50" id="range-prompt" oninput="handleInput()">
+        </div>
+        <div style="padding:0 1.5rem; border-right:1px solid var(--border);">
+            <div class="calc-label">Monthly Completion <b id="val-comp">200M</b></div>
+            <input type="range" min="1" max="1000" value="200" id="range-comp" oninput="handleInput()">
+        </div>
+        <div style="padding-left:1.5rem; display:flex; flex-direction:column; justify-content:center; align-items:flex-end;">
+            <div class="calc-label">Peak Budget Forecast</div>
+            <div style="font-family:var(--head); font-size:1.8rem; color:var(--green); text-shadow:0 0 15px rgba(0,255,136,0.3);" id="forecast-total">$0</div>
+        </div>
+    </div>
+
+    <!-- TABS & ACTIONS -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:2rem; flex-wrap:wrap; margin-bottom:1rem;" class="fade">
+        <div id="profile-tabs" class="tabs" style="margin-bottom:0.5rem;"></div>
+        <div style="margin-bottom:1.5rem;">
+            <button class="btn btn-terminal" onclick="openTerminal()">▶ VIEW ENGINE LOGS</button>
+        </div>
+    </div>
+
+    <!-- 🏆 PODIUM -->
+    <div class="sec"><h2>🏆 Compromise Optimization Top 3</h2></div>
+    <div id="podium" class="podium fade"></div>
+
+    <!-- 📋 FULL RANKINGS -->
+    <div class="sec"><h2>📋 Enterprise Model Matrix</h2></div>
+    <div class="card" style="padding:0; overflow-x:auto;">
+        <table style="width:100%; min-width:850px; border-collapse:separate; border-spacing:0 4px;">
+            <thead id="tbl-head"></thead>
+            <tbody id="tbl-body"></tbody>
+        </table>
+    </div>
+
+    <!-- 🌐 3D VISUAL -->
+    <div class="sec"><h2>🌐 Scoped Capability Landscape</h2></div>
+    <div class="card p-6 fade" style="margin-bottom:2rem;">
+        <div id="three-container"><div id="three-tooltip"></div></div>
+    </div>
+
+    <!-- ⚔️ RADAR COMPARISON -->
+    <div class="sec"><h2>⚔️ Multi-Criteria Capability Radar</h2></div>
+    <div class="card p-6 fade">
+        <div id="cmp-pills" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:1rem;"></div>
+        <div style="height:350px; position:relative;"><canvas id="ch-radar"></canvas></div>
+    </div>
+
+    <!-- SYSTEM OPS -->
+    <div class="sec"><h2>⚙️ System Parameters</h2></div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem;" class="fade">
+        <div class="card p-6" style="display:flex; flex-direction:column; gap:0.8rem; align-items:center;">
+            <button class="btn btn-p" style="width:100%;" onclick="triggerPipeline()">⚡ RUN ASYNC FETCH PIPELINE</button>
+            <p style="font-size:0.65rem; color:var(--muted2); text-transform:uppercase; letter-spacing:0.1em;">Concurrency: worker threads via HTTPX/Asyncio</p>
+        </div>
+        <div class="card p-6" style="display:flex; flex-direction:column; gap:0.8rem; align-items:center;">
+            <button class="btn btn-terminal" style="width:100%; border:none; background:var(--purple); color:#fff; justify-content:center;" onclick="genReport()">📄 EXPORT ENTERPRISE DIGEST</button>
+            <p style="font-size:0.65rem; color:var(--muted2); text-transform:uppercase; letter-spacing:0.1em;">Format: Comprehensive Markdown Report</p>
+        </div>
+    </div>
+
+    <footer>
+        EPINEON ENGINE V3.1 · ELITE EDITION · DESIGNED BY <strong>EL KHOBZI ISMAIL</strong> · ESITH 2026<br>
+        ALGORITHMS: SHANNON ENTROPY WEIGHTING // VIKOR COMPROMISE SCORING
+    </footer>
+</div>
+
+<script>
+let ALL_MODELS = [], CMP_CHARTS = null, CMP_SEL = new Set(), WS_CON = null;
+const API = location.origin;
+
+// ─── INITIALIZATION ───
+async function init() {
+    try {
+        const res = await fetch(`${API}/profiles`).then(r => r.json());
+        if (res.profiles && res.profiles.length) {
+            renderTabs(res.profiles);
+            loadProfile(res.profiles[0]);
+        }
+        setupWS();
+    } catch(e) { document.getElementById('offline').style.display = 'flex'; }
+}
+
+function setupWS() {
+    const p = location.protocol==='https:'?'wss:':'ws:';
+    try {
+        WS_CON = new WebSocket(`${p}//${location.host}/ws/pipeline`);
+        WS_CON.onmessage = (e) => logToTerminal(e.data);
+        WS_CON.onclose = () => setTimeout(setupWS, 5000);
+    } catch(e) {}
+}
+
+// ─── TABS ───
+function renderTabs(p) {
+    const c = document.getElementById('profile-tabs');
+    c.innerHTML = p.map((n,i) => `<button class="tab ${i===0?'on':''}" onclick="switchTab(this,'${n}')">${n}</button>`).join('');
+}
+function switchTab(btn, n) {
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    loadProfile(n);
+}
+
+// ─── DATA LOADING ───
+async function loadProfile(p) {
+    const res = await fetch(`${API}/recommend?profile=${encodeURIComponent(p)}&top_k=25`).then(r=>r.json());
+    ALL_MODELS = res.recommendations || [];
+    renderAll();
+}
+
+function renderAll() {
+    renderPodium(ALL_MODELS.slice(0,3));
+    renderTable(ALL_MODELS);
+    renderPills(ALL_MODELS);
+    updateRadar();
+    update3D(ALL_MODELS);
+    handleInput(); // Initial forecast
+}
+
+// ─── FORECAST HANDLING ───
+function handleInput() {
+    const pVal = parseInt(document.getElementById('range-prompt').value);
+    const cVal = parseInt(document.getElementById('range-comp').value);
+    document.getElementById('val-prompt').textContent = pVal + 'M';
+    document.getElementById('val-comp').textContent = cVal + 'M';
+
+    if (!ALL_MODELS || !ALL_MODELS.length) return;
+
+    // Calc total for top model
+    const top = ALL_MODELS[0];
+    const total = (pVal * top.price_input) + (cVal * top.price_output);
+    document.getElementById('forecast-total').textContent = `$${Math.round(total).toLocaleString()}`;
+
+    // Update individual values
+    ALL_MODELS.forEach((m, i) => {
+        const cost = (pVal * m.price_input) + (cVal * m.price_output);
+        const els = document.querySelectorAll(`.forecast-val-${i}`);
+        els.forEach(el => el.textContent = `$${Math.round(cost).toLocaleString()}`);
+    });
+}
+
+// ─── RENDER PODIUM ───
+function renderPodium(top) {
+    const c = document.getElementById('podium');
+    c.innerHTML = top.length ? top.map((m,i) => `
+        <div class="card pod p-6">
+            <div class="rk rk${i+1}">RK #${i+1}</div>
+            <div class="pod-score">${m.score}</div>
+            <div class="pod-name">${m.model_name}</div>
+            <div class="pod-just">${m.justification}</div>
+            <div class="pod-stats">
+                <div class="ps"><div class="ps-l">Intelligence</div><div class="ps-v" style="color:var(--cyan)">${m.intelligence_score}</div></div>
+                <div class="ps"><div class="ps-l">Arena ELO</div><div class="ps-v" style="color:var(--purple)">${m.arena_elo||'—'}</div></div>
+                <div class="ps ps-forecast"><div class="ps-l">Monthly Enterprise Forecast</div><div class="ps-v forecast-val-${i}">—</div></div>
+            </div>
+        </div>
+    `).join('') : '<div class="card p-6" style="grid-column:1/-1; color:var(--muted2);">No data synchronized. Run the pipeline to start monitor.</div>';
+}
+
+// ─── RENDER TABLE ───
+function renderTable(models) {
+    document.getElementById('tbl-head').innerHTML = `
+        <tr style="text-align:left; color:var(--muted2); font-size:0.6rem; text-transform:uppercase; letter-spacing:0.15em;">
+            <th style="padding:1rem;">#</th><th>LLM Identity</th><th>VIKOR Score</th><th>Ent. Forecast</th><th>Intel</th><th>Speed</th>
+        </tr>
+    `;
+    document.getElementById('tbl-body').innerHTML = models.map((m,i) => `
+        <tr>
+            <td style="padding:1rem;"><span style="color:var(--muted2); font-family:var(--mono);">#${i+1}</span></td>
+            <td style="font-weight:700; color:white;">${m.model_name}</td>
+            <td>
+                <div style="display:flex; align-items:center; gap:0.8rem;">
+                    <div style="width:40px; height:4px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
+                        <div style="width:${m.score}%; height:100%; background:linear-gradient(90deg, var(--cyan), var(--purple));"></div>
+                    </div>
+                    <span style="font-family:var(--mono); color:var(--cyan); font-size:0.75rem;">${m.score}</span>
+                </div>
+            </td>
+            <td style="color:var(--green); font-weight:600;" class="forecast-val-${i}">—</td>
+            <td>${m.intelligence_score}</td>
+            <td style="font-size:0.7rem;">${m.speed_tokens_sec} <span style="opacity:0.3">t/s</span></td>
+        </tr>
+    `).join('');
+}
+
+// ─── RADAR ───
+function renderPills(models) {
+    const c = document.getElementById('cmp-pills');
+    CMP_SEL.clear();
+    c.innerHTML = models.slice(0, 8).map(m => `<button class="tab" style="padding:0.4rem 0.8rem; font-size:0.7rem;" onclick="toggleCmp(this,'${m.model_name}')">${m.model_name}</button>`).join('');
+}
+function toggleCmp(btn, n) {
+    if (CMP_SEL.has(n)) { CMP_SEL.delete(n); btn.classList.remove('on'); }
+    else if (CMP_SEL.size < 4) { CMP_SEL.add(n); btn.classList.add('on'); }
+    updateRadar();
+}
+function updateRadar() {
+    if (CMP_CHARTS) CMP_CHARTS.destroy();
+    const sel = ALL_MODELS.filter(m => CMP_SEL.has(m.model_name));
+    if (!sel.length && ALL_MODELS.length) sel.push(ALL_MODELS[0]);
+    
+    const colors = ['#00d4ff', '#7b2fff', '#ff6b9d', '#00ff88'];
+    const datasets = sel.map((m,i) => ({
+        label: m.model_name,
+        data: Object.values(m.breakdown),
+        borderColor: colors[i],
+        backgroundColor: colors[i] + '11',
+        pointBackgroundColor: colors[i],
+        borderWidth: 2
+    }));
+    
+    CMP_CHARTS = new Chart(document.getElementById('ch-radar'), {
+        type: 'radar',
+        data: { labels: ['Intel', 'Arena', 'Cost', 'Speed', 'TTFT', 'Ctx'], datasets },
+        options: {
+            layout: { padding: { top: 25, bottom: 25 } },
+            scales: { r: { min: 0, max: 100, ticks:{display:false}, grid:{color:'rgba(255,255,255,0.05)'}, angleLines:{color:'rgba(255,255,255,0.05)'}, pointLabels:{color:'#6a8aaa', font:{size:11}} } },
+            plugins: { 
+                legend: { display: false }, 
+                tooltip: { backgroundColor:'rgba(3,8,15,0.95)', borderColor: '#00d4ff', borderWidth:1, titleColor: '#00d4ff', cornerRadius:10 } 
+            }
+        }
+    });
+}
+
+// ─── 3D LOGIC ───
+let threeR;
+function update3D(models) {
+    const c = document.getElementById('three-container');
+    if (threeR) { c.removeChild(threeR.domElement); }
+    c.querySelectorAll('.three-label').forEach(el => el.remove());
+    const W = c.clientWidth, H = 400;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, W/H, 0.1, 1000);
+    camera.position.set(15, 12, 18);
+    threeR = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    threeR.setSize(W, H);
+    c.appendChild(threeR.domElement);
+    const controls = new THREE.OrbitControls(camera, threeR.domElement);
+    controls.autoRotate = true; controls.autoRotateSpeed = 0.5; controls.enableDamping = true;
+    
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const pl = new THREE.PointLight(0x00d4ff, 1); pl.position.set(10,15,10); scene.add(pl);
+    
+    const top10 = models.slice(0, 10);
+    const labels = [];
+    top10.forEach((m, i) => {
+        const val = (m.score / 100) * 8;
+        const px = (i % 5) * 3 - 6, pz = Math.floor(i/5) * 3 - 3;
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, val, 1.2), new THREE.MeshPhongMaterial({color: 0x00d4ff, transparent:true, opacity:0.6, shininess:100}));
+        box.position.set(px, val/2, pz);
+        scene.add(box);
+        
+        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(box.geometry), new THREE.LineBasicMaterial({color:0x00d4ff, opacity:0.3}));
+        edges.position.copy(box.position);
+        scene.add(edges);
+
+        const lEl = document.createElement('div');
+        lEl.className = 'three-label';
+        lEl.innerText = m.model_name;
+        lEl.style.cssText = 'position:absolute;color:#00d4ff;font-size:0.65rem;font-family:var(--mono);pointer-events:none;transform:translate(-50%,-50%);text-shadow:0 0 5px #000, 0 0 10px rgba(0,212,255,0.5);';
+        c.appendChild(lEl);
+        labels.push({el: lEl, pos: new THREE.Vector3(px, val + 0.6, pz)});
+    });
+
+    function anim() { 
+        requestAnimationFrame(anim); 
+        controls.update(); 
+        threeR.render(scene, camera); 
+        labels.forEach(l => {
+            const v = l.pos.clone().project(camera);
+            if (v.z > 1) { l.el.style.display = 'none'; return; }
+            l.el.style.display = 'block';
+            l.el.style.left = (v.x * .5 + .5) * W + 'px';
+            l.el.style.top = (v.y * -.5 + .5) * H + 'px';
+        });
+    }
+    anim();
+}
+
+// ─── TERMINAL & OPS ───
+function openTerminal() { document.getElementById('terminal-modal').style.display = 'flex'; }
+function closeTerminal() { document.getElementById('terminal-modal').style.display = 'none'; }
+function logToTerminal(msg) {
+    const c = document.getElementById('terminal-output');
+    const el = document.createElement('div'); el.className = 'log-entry';
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    
+    let color = 'var(--text)';
+    if (msg.includes('✅')) color = 'var(--green)';
+    if (msg.includes('❌')) color = 'var(--red)';
+    if (msg.includes('⚡')) color = 'var(--cyan)';
+    
+    el.innerHTML = `<span class="log-time">[${time}]</span> <span style="color:${color}">${msg}</span>`;
+    c.appendChild(el);
+    c.scrollTop = c.scrollHeight;
+}
+
+async function triggerPipeline() {
+    openTerminal();
+    logToTerminal("⚡ Triggering elite async collection pipeline...");
+    await fetch(`${API}/scheduler/run`, {method:'POST'});
+}
+
+async function genReport() {
+    logToTerminal("📄 Generating comprehensive digest...");
+    const r = await fetch(`${API}/report`).then(t=>t.text());
+    const b = new Blob([r], {type:'text/markdown'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'epineon_intelligence_digest.md'; a.click();
+}
+
+// Background
+(function(){
+    const c=document.getElementById('bg-canvas'),x=c.getContext('2d');let w,h,pts=[];
+    const r=()=>{w=c.width=innerWidth;h=c.height=innerHeight;};r();addEventListener('resize',r);
+    for(let i=0;i<40;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,v:(Math.random()-.5)*0.2});
+    !function a(){x.clearRect(0,0,w,h);pts.forEach(p=>{p.x+=p.v;p.y+=p.v;x.fillStyle='rgba(0,212,255,0.1)';x.fillRect(p.x%w,p.y%h,1,1);});requestAnimationFrame(a);}();
+})();
+
+init();
+</script>
+</body>
+</html>
