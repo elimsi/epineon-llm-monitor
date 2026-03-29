@@ -302,7 +302,7 @@ eloChart=new Chart(eC,{type:'bar',data:{labels:elo.map(m=>m.model_name.length>14
 }
 
 // COMPARE
-function renderCompareButtons(ms){const w=document.getElementById('compare-select');w.innerHTML='';ms.slice(0,15).forEach(m=>{const b=document.createElement('button');b.className='cb'+(compareSet.has(m.model_name)?' sel':'');b.textContent=m.model_name;b.onclick=()=>{if(compareSet.has(m.model_name)){compareSet.delete(m.model_name);b.classList.remove('sel')}else if(compareSet.size<5){compareSet.add(m.model_name);b.classList.add('sel')}renderCompareChart()};w.appendChild(b)})}
+function renderCompareButtons(ms){const w=document.getElementById('compare-select');w.innerHTML='';ms.forEach(m=>{const b=document.createElement('button');b.className='cb'+(compareSet.has(m.model_name)?' sel':'');b.textContent=m.model_name;b.onclick=()=>{if(compareSet.has(m.model_name)){compareSet.delete(m.model_name);b.classList.remove('sel')}else if(compareSet.size<5){compareSet.add(m.model_name);b.classList.add('sel')}renderCompareChart()};w.appendChild(b)})}
 
 function renderCompareChart(){if(compareChart)compareChart.destroy();if(compareSet.size<2)return;
 const sel=allRecs.filter(m=>compareSet.has(m.model_name));const cc=document.getElementById('compare-chart').getContext('2d');
