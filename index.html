@@ -1,887 +1,674 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>EPINEON AI | LLM Intelligence Monitor</title>
-<meta name="description" content="Real-time LLM monitoring and enterprise recommendation system by EL KHOBZI Ismail"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#03080f;--bg2:#060e1a;--bg3:#0a1628;
-  --glass:rgba(255,255,255,0.03);--glass2:rgba(255,255,255,0.06);
-  --border:rgba(0,212,255,0.12);--border2:rgba(0,212,255,0.28);
-  --cyan:#00d4ff;--cyan2:#00a8cc;--purple:#7b2fff;--pink:#ff6b9d;
-  --gold:#ffd700;--silver:#b8c8d8;--bronze:#cd9060;
-  --green:#00ff88;--red:#ff4d6d;--orange:#ff9500;
-  --text:#dce8f8;--muted:#6a8aaa;--muted2:#4a6a8a;
-  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;--head:'Orbitron',monospace;
-}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
-#root{min-height:100vh}
-#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+    <meta charset="UTF-8">
+    <title>EPINEON AI | LLM Intelligence Monitor</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="description" content="Real-time LLM monitoring, scoring, and enterprise recommendation system — EL KHOBZI Ismail">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --bg:#03080f; --bg2:#060e1a; --glass:rgba(255,255,255,0.03); --glass2:rgba(255,255,255,0.06);
+            --border:rgba(0,212,255,0.12); --border2:rgba(0,212,255,0.4);
+            --cyan:#00d4ff; --purple:#7b2fff; --pink:#ff6b9d; --gold:#ffd700; --silver:#b8c8d8; --bronze:#cd9060;
+            --green:#00ff88; --red:#ff4d6d; --text:#dce8f8; --muted:#6a8aaa; --muted2:#4a6a8a;
+            --head:'Orbitron',sans-serif; --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;min-height:100vh;}
+        #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;}
+        .app{position:relative;z-index:10;max-width:1350px;margin:0 auto;padding:2rem;}
+        ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:3px;}
 
-/* Scrollbar */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.2);border-radius:2px}
+        /* Cards */
+        .card{background:var(--glass);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;transition:.35s;}
+        .card:hover{border-color:var(--border2);box-shadow:0 0 30px rgba(0,212,255,.1);}
+        .p-6{padding:1.6rem;}
 
-/* Layout */
-.app{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:0 2rem 4rem}
+        /* Section headers */
+        .sec{display:flex;align-items:center;gap:1rem;margin:2.5rem 0 1.2rem;}
+        .sec h2{font-family:var(--head);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:400;}
+        .sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
 
-/* Glass Card */
-.card{background:var(--glass);border:1px solid var(--border);border-radius:18px;
-  backdrop-filter:blur(24px);transition:border-color .25s,box-shadow .25s}
-.card:hover{border-color:var(--border2);box-shadow:0 0 30px rgba(0,212,255,.08)}
-.card-pad{padding:1.75rem}
+        /* Header */
+        .header{text-align:center;padding:3.5rem 0 1.5rem;}
+        .badge{background:rgba(0,212,255,.08);border:1px solid var(--border);border-radius:50px;padding:.45rem 1.4rem;font-size:.68rem;color:var(--cyan);letter-spacing:.22em;text-transform:uppercase;margin-bottom:1.5rem;display:inline-block;}
+        .title{font-family:var(--head);font-size:clamp(2rem,5.5vw,4rem);font-weight:900;background:linear-gradient(135deg,#00d4ff,#7b2fff,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.1;margin-bottom:.8rem;}
+        .subtitle{color:var(--muted);font-size:.95rem;font-weight:300;}
+        .author-bar{margin-top:1.2rem;font-size:.8rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:.8rem;flex-wrap:wrap;}
+        .author-bar strong{color:var(--text);border-bottom:1px solid var(--cyan);}
+        .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+        .dot-on{background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s infinite;}
+        .dot-off{background:var(--red);}
+        @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+        .fade{animation:fadeIn .5s ease both;}
 
-/* Section title */
-.section-title{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem}
-.section-title h2{font-family:var(--head);font-size:.72rem;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--muted);font-weight:400}
-.section-title::after{content:'';flex:1;height:1px;
-  background:linear-gradient(90deg,var(--border2),transparent)}
+        /* Profile tabs */
+        .tabs{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+        .tab{background:var(--glass);border:1px solid var(--border);color:var(--muted);padding:.6rem 1.3rem;border-radius:12px;cursor:pointer;transition:.25s;font-family:var(--font);font-size:.78rem;letter-spacing:.04em;}
+        .tab:hover{border-color:var(--cyan);color:var(--text);background:rgba(0,212,255,.04);}
+        .tab.on{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan);font-weight:600;box-shadow:0 0 18px rgba(0,212,255,.12);}
 
-/* Animations */
-@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-@keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
-@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(0,212,255,.3)}50%{box-shadow:0 0 22px rgba(0,212,255,.7)}}
+        /* Stat chips */
+        .chips{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:2rem;}
+        .chip{background:var(--glass);border:1px solid var(--border);padding:.45rem 1rem;border-radius:50px;font-size:.76rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;}
+        .chip b{color:var(--cyan);}
 
-.fade-up{animation:fadeUp .6s ease both}
-.fade-in{animation:fadeIn .4s ease both}
+        /* Podium */
+        .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;}
+        .pod{text-align:center;position:relative;overflow:hidden;cursor:default;transition:.4s cubic-bezier(.2,.8,.3,1.1);}
+        .pod:hover{transform:translateY(-10px) scale(1.02);border-color:var(--border2);box-shadow:0 12px 40px rgba(0,0,0,.5);}
+        .rk{position:absolute;top:1.2rem;right:1.2rem;font-family:var(--head);font-size:.7rem;padding:.3rem .6rem;border-radius:7px;font-weight:700;}
+        .rk1{background:var(--gold);color:#000;box-shadow:0 0 14px rgba(255,215,0,.5);} .rk2{background:var(--silver);color:#000;} .rk3{background:var(--bronze);color:#fff;}
+        .pod-score{font-family:var(--head);font-size:2.6rem;font-weight:900;color:var(--cyan);margin-bottom:.4rem;}
+        .pod-name{font-size:1.05rem;font-weight:700;margin-bottom:.4rem;color:#fff;}
+        .pod-just{font-size:.66rem;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:1.2rem;min-height:2.5em;}
+        .pod-stats{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;text-align:left;}
+        .ps{background:rgba(255,255,255,.03);padding:.55rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.04);}
+        .ps-l{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+        .ps-v{font-size:.85rem;font-weight:600;font-family:var(--mono);}
 
-/* Header */
-.header{text-align:center;padding:3.5rem 0 2.5rem;position:relative}
-.header-badge{display:inline-flex;align-items:center;gap:.5rem;
-  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(123,47,255,.08));
-  border:1px solid rgba(0,212,255,.2);border-radius:100px;
-  padding:.38rem 1.1rem;font-size:.68rem;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--cyan);margin-bottom:1.6rem;
-  animation:fadeUp .5s ease both}
-.header h1{font-family:var(--head);font-weight:900;
-  font-size:clamp(2.2rem,5.5vw,4.5rem);line-height:1.05;letter-spacing:.04em;
-  background:linear-gradient(135deg,#00d4ff 0%,#7b2fff 55%,#ff6b9d 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:.9rem;animation:fadeUp .5s .1s ease both}
-.header p{color:var(--muted);font-size:.95rem;font-weight:300;
-  animation:fadeUp .5s .2s ease both}
-.author-tag{display:inline-flex;align-items:center;gap:.7rem;margin-top:1.2rem;
-  background:var(--glass2);border:1px solid rgba(255,255,255,.08);
-  border-radius:100px;padding:.4rem 1.1rem;font-size:.78rem;
-  animation:fadeUp .5s .3s ease both}
-.author-tag span{color:var(--muted);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase}
-.author-tag strong{color:var(--text);font-weight:600}
-.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
-.status-dot.online{background:var(--green);animation:glow 2s ease-in-out infinite}
-.status-dot.offline{background:var(--red);animation:pulse 1.5s ease-in-out infinite}
+        /* Table */
+        .tbl-wrap{overflow-x:auto;margin-bottom:.5rem;}
+        table{width:100%;border-collapse:separate;border-spacing:0 .3rem;min-width:800px;}
+        thead th{text-align:left;font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted2);padding:.6rem .8rem;font-weight:500;cursor:pointer;user-select:none;white-space:nowrap;}
+        thead th:hover{color:var(--muted);}
+        tbody tr{background:var(--glass);transition:.2s;} tbody tr:hover{background:rgba(0,212,255,.04);transform:translateX(3px);}
+        td{padding:.7rem .8rem;font-size:.8rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+        td:first-child{border-left:1px solid var(--border);border-radius:12px 0 0 12px;}
+        td:last-child{border-right:1px solid var(--border);border-radius:0 12px 12px 0;}
+        .rn{font-family:var(--head);font-size:.75rem;color:var(--muted2);}
+        .sb{display:flex;align-items:center;gap:.5rem;} .sb-bar{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;}
+        .sb-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .8s cubic-bezier(.4,0,.2,1);}
+        .sb-n{font-family:var(--mono);font-size:.78rem;font-weight:600;color:var(--cyan);min-width:35px;}
+        .tag{font-size:.6rem;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;padding:.14rem .45rem;}
 
-/* Profile pills */
-.profile-wrap{animation:fadeUp .5s .35s ease both;margin-bottom:1.5rem}
-.profile-row{display:flex;gap:.6rem;flex-wrap:wrap}
-.profile-btn{background:rgba(0,212,255,.03);border:1px solid rgba(0,212,255,.15);
-  border-radius:10px;padding:.55rem 1.1rem;color:var(--muted);font-family:var(--font);
-  font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:.02em}
-.profile-btn:hover{border-color:rgba(0,212,255,.4);color:var(--cyan);
-  background:rgba(0,212,255,.06)}
-.profile-btn.active{background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(123,47,255,.15));
-  border-color:var(--cyan);color:var(--cyan);font-weight:600;
-  box-shadow:0 0 20px rgba(0,212,255,.18)}
+        /* Charts grid */
+        .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+        .chart-box{height:340px;display:flex;flex-direction:column;}
+        .ct{font-family:var(--head);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;}
 
-/* Stats bar */
-.stats-bar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:2rem;
-  animation:fadeUp .5s .4s ease both}
-.stat-chip{background:var(--glass);border:1px solid var(--border);
-  border-radius:100px;padding:.38rem 1rem;font-size:.76rem;color:var(--muted);
-  display:flex;align-items:center;gap:.4rem}
-.stat-chip b{color:var(--cyan);font-weight:600}
+        /* 3D container */
+        #three-container{width:100%;height:420px;border-radius:18px;overflow:hidden;position:relative;background:rgba(0,0,0,.3);border:1px solid var(--border);}
+        #three-tooltip{position:absolute;background:rgba(4,10,20,.95);border:1px solid var(--cyan);border-radius:10px;padding:.5rem .8rem;font-size:.75rem;pointer-events:none;display:none;z-index:100;color:var(--text);}
 
-/* Podium */
-.podium-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;
-  margin-bottom:2.5rem;animation:fadeUp .6s .45s ease both}
-.model-card{border-radius:20px;padding:1.75rem 1.4rem;text-align:center;
-  background:var(--glass);border:1px solid var(--border);cursor:default;
-  overflow:hidden;position:relative;transition:border-color .3s,box-shadow .3s,transform .3s}
-.model-card.gold{border-color:rgba(255,215,0,.3);
-  background:linear-gradient(160deg,rgba(255,215,0,.05) 0%,var(--bg) 80%)}
-.model-card.silver{border-color:rgba(184,200,216,.22)}
-.model-card.bronze{border-color:rgba(205,144,96,.22)}
-.rank-num{position:absolute;top:1rem;right:1rem;font-family:var(--head);
-  font-size:.65rem;font-weight:700;width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center}
-.gold .rank-num{background:linear-gradient(135deg,#ffd700,#ff9500);color:#000;
-  box-shadow:0 0 16px rgba(255,215,0,.55)}
-.silver .rank-num{background:linear-gradient(135deg,#ccd8e4,#7a9ab0);color:#000}
-.bronze .rank-num{background:linear-gradient(135deg,#cd9060,#8b5020);color:#fff}
-.score-ring{position:relative;width:90px;height:90px;margin:0 auto 1.3rem}
-.score-ring svg{transform:rotate(-90deg)}
-.ring-bg{fill:none;stroke:rgba(255,255,255,.05);stroke-width:6}
-.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;
-  transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)}
-.ring-text{position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;line-height:1}
-.ring-score{font-family:var(--head);font-size:1.3rem;font-weight:700}
-.gold .ring-score{color:var(--gold)}.silver .ring-score{color:var(--silver)}
-.bronze .ring-score{color:var(--bronze)}
-.ring-label{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
-.model-name{font-size:.95rem;font-weight:600;margin-bottom:.35rem;line-height:1.2}
-.license-badge{display:inline-block;background:rgba(0,212,255,.07);
-  border:1px solid rgba(0,212,255,.14);border-radius:5px;
-  padding:.18rem .55rem;font-size:.6rem;color:var(--cyan);
-  letter-spacing:.06em;text-transform:uppercase;margin-bottom:.5rem}
-.justification{font-size:.64rem;color:var(--muted);font-style:italic;
-  line-height:1.45;margin-bottom:1rem;min-height:2.5em}
-.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;text-align:left}
-.metric{background:rgba(255,255,255,.025);border-radius:8px;padding:.45rem .6rem}
-.metric-key{font-size:.54rem;color:var(--muted);text-transform:uppercase;
-  letter-spacing:.1em;margin-bottom:.15rem}
-.metric-val{font-size:.78rem;font-weight:600;font-family:var(--mono)}
+        /* Comparison */
+        .cmp-pills{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem;}
+        .cmp-btn{background:rgba(123,47,255,.04);border:1px solid rgba(123,47,255,.18);border-radius:8px;padding:.35rem .7rem;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:var(--font);transition:.2s;}
+        .cmp-btn:hover{border-color:rgba(123,47,255,.5);color:#c4a0ff;}
+        .cmp-btn.sel{background:rgba(123,47,255,.15);border-color:var(--purple);color:#d4b8ff;font-weight:600;}
+        .cmp-hint{font-size:.72rem;color:var(--muted2);margin-bottom:.7rem;}
 
-/* Table */
-.table-wrap{margin-bottom:2.5rem;animation:fadeUp .6s .5s ease both}
-.table-scroll{overflow-x:auto}
-table{width:100%;border-collapse:separate;border-spacing:0 .35rem;min-width:700px}
-thead th{text-align:left;font-size:.6rem;text-transform:uppercase;letter-spacing:.15em;
-  color:var(--muted2);padding:.6rem 1rem;font-weight:500;cursor:pointer;user-select:none}
-thead th:hover{color:var(--muted)}
-tbody tr{background:var(--glass);transition:all .2s}
-tbody tr:hover{background:rgba(0,212,255,.04);transform:translateX(3px)}
-td{padding:.8rem 1rem;font-size:.82rem;border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border)}
-td:first-child{border-left:1px solid var(--border);border-radius:12px 0 0 12px;padding-left:1.2rem}
-td:last-child{border-right:1px solid var(--border);border-radius:0 12px 12px 0}
-.rank-n{font-family:var(--head);font-size:.82rem;color:var(--muted2)}
-.score-bar-wrap{display:flex;align-items:center;gap:.6rem}
-.score-bar{flex:1;height:4px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
-.score-bar-fill{height:100%;border-radius:2px;
-  background:linear-gradient(90deg,var(--cyan),var(--purple));
-  width:0;transition:width .9s cubic-bezier(.4,0,.2,1)}
-.score-num{font-family:var(--mono);font-size:.8rem;font-weight:600;
-  color:var(--cyan);min-width:36px}
-.tag{font-size:.62rem;color:var(--muted);background:rgba(255,255,255,.04);
-  border:1px solid var(--border);border-radius:5px;padding:.14rem .45rem}
+        /* Movements */
+        .mv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.8rem;}
+        .mv{display:flex;align-items:center;gap:.8rem;padding:.8rem 1rem;background:var(--glass);border:1px solid rgba(255,255,255,.05);border-radius:14px;transition:.2s;}
+        .mv:hover{border-color:rgba(0,212,255,.15);}
+        .mv-icon{font-size:1.4rem;flex-shrink:0;}
+        .mv-info{flex:1;min-width:0;} .mv-name{font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .mv-det{font-size:.68rem;color:var(--muted);}
+        .mv-badge{font-size:.62rem;padding:.17rem .55rem;border-radius:6px;font-weight:600;flex-shrink:0;}
+        .badge-new{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.25);}
+        .badge-drop{background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.25);}
 
-/* Charts layout */
-.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;
-  margin-bottom:2.5rem;animation:fadeUp .6s .55s ease both}
-.chart-title{font-family:var(--head);font-size:.65rem;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:1.3rem}
+        /* Report */
+        .rpt-pre{max-height:350px;overflow-y:auto;padding:1.2rem;font-family:var(--mono);font-size:.75rem;line-height:1.7;color:var(--muted);white-space:pre-wrap;background:rgba(0,0,0,.3);border-radius:14px;border:1px solid rgba(255,255,255,.04);}
+        .rpt-acts{display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;}
 
-/* Comparison */
-.comp-wrap{animation:fadeUp .6s .58s ease both;margin-bottom:2.5rem}
-.comp-pills{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.3rem}
-.comp-pill{background:rgba(123,47,255,.04);border:1px solid rgba(123,47,255,.18);
-  border-radius:8px;padding:.35rem .75rem;font-size:.74rem;color:var(--muted);
-  cursor:pointer;font-family:var(--font);transition:all .2s}
-.comp-pill:hover{border-color:rgba(123,47,255,.5);color:#c4a0ff}
-.comp-pill.sel{background:rgba(123,47,255,.15);border-color:var(--purple);
-  color:#d4b8ff;font-weight:600}
-.comp-hint{font-size:.7rem;color:var(--muted2);margin-bottom:.8rem}
+        /* Buttons */
+        .btn{padding:.6rem 1.2rem;border-radius:11px;border:none;font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;transition:.22s;}
+        .btn-p{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff;}
+        .btn-p:hover{box-shadow:0 0 25px rgba(0,212,255,.4);transform:translateY(-2px);}
+        .btn-s{background:var(--glass2);color:var(--muted);border:1px solid var(--border);}
+        .btn-s:hover{border-color:var(--cyan);color:var(--cyan);}
+        .btn-d{background:rgba(123,47,255,.15);color:#c4a0ff;border:1px solid rgba(123,47,255,.3);}
+        .btn-d:hover{background:rgba(123,47,255,.25);}
 
-/* Movements */
-.mv-wrap{animation:fadeUp .6s .6s ease both;margin-bottom:2.5rem}
-.mv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.8rem}
-.mv-item{display:flex;align-items:center;gap:.9rem;padding:.9rem 1.1rem;
-  background:var(--glass);border:1px solid rgba(255,255,255,.05);
-  border-radius:13px;transition:border-color .2s;animation:slideIn .4s ease both}
-.mv-item:hover{border-color:rgba(0,212,255,.15)}
-.mv-icon{font-size:1.5rem;flex-shrink:0}
-.mv-info{flex:1;min-width:0}
-.mv-name{font-weight:600;font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mv-detail{font-size:.7rem;color:var(--muted)}
-.mv-badge{font-size:.63rem;padding:.18rem .6rem;border-radius:6px;font-weight:600;flex-shrink:0}
-.badge-new{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.28)}
-.badge-drop{background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.28)}
+        /* Scheduler */
+        .sch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.8rem;margin-bottom:1rem;}
+        .sch-s{background:var(--glass);border:1px solid var(--border);border-radius:13px;padding:1rem 1.2rem;}
+        .sch-l{font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted2);margin-bottom:.3rem;}
+        .sch-v{font-family:var(--mono);font-size:.85rem;font-weight:500;}
 
-/* Report section */
-.report-wrap{animation:fadeUp .6s .63s ease both;margin-bottom:2.5rem}
-.report-preview{max-height:380px;overflow-y:auto;padding:1.4rem;
-  font-family:var(--mono);font-size:.78rem;line-height:1.75;color:var(--muted);
-  white-space:pre-wrap;background:rgba(0,0,0,.25);border-radius:12px;
-  border:1px solid rgba(255,255,255,.04)}
-.report-actions{display:flex;gap:.7rem;margin-top:1rem;flex-wrap:wrap}
-.btn{padding:.65rem 1.3rem;border-radius:11px;border:none;
-  font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;transition:all .22s}
-.btn-primary{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff}
-.btn-primary:hover{box-shadow:0 0 28px rgba(0,212,255,.45);transform:translateY(-2px)}
-.btn-secondary{background:var(--glass2);color:var(--muted);border:1px solid var(--border)}
-.btn-secondary:hover{border-color:var(--cyan);color:var(--cyan);transform:translateY(-1px)}
-.btn-danger{background:rgba(123,47,255,.15);color:#c4a0ff;border:1px solid rgba(123,47,255,.3)}
-.btn-danger:hover{background:rgba(123,47,255,.28);transform:translateY(-1px)}
+        /* Toggles */
+        .tgl-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.5rem;}
+        .tgl{position:relative;width:40px;height:20px;flex-shrink:0;}
+        .tgl input{opacity:0;width:0;height:0;}
+        .tgl-s{position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.07);border-radius:20px;border:1px solid rgba(255,255,255,.1);transition:.28s;}
+        .tgl-s::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:2px;background:#fff;border-radius:50%;transition:.28s;}
+        input:checked+.tgl-s{background:linear-gradient(135deg,var(--cyan),var(--purple));}
+        input:checked+.tgl-s::before{transform:translateX(19px);}
+        .tgl-t{font-size:.78rem;color:var(--muted);}
 
-/* Scheduler */
-.sched-wrap{animation:fadeUp .6s .65s ease both;margin-bottom:2.5rem}
-.sched-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.4rem}
-.sched-stat{background:var(--glass);border:1px solid var(--border);border-radius:13px;padding:1.1rem 1.3rem}
-.sched-stat-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.14em;color:var(--muted2);margin-bottom:.35rem}
-.sched-stat-val{font-family:var(--mono);font-size:.9rem;font-weight:500;color:var(--text)}
-.running-badge{display:inline-flex;align-items:center;gap:.4rem;
-  background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.22);
-  border-radius:100px;padding:.28rem .7rem;font-size:.68rem;color:var(--green)}
-.reports-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.8rem;max-height:200px;overflow-y:auto}
-.report-item{display:flex;align-items:center;gap.8rem;padding:.55rem .85rem;
-  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);
-  border-radius:9px;font-size:.74rem;gap:.8rem}
-.report-item-name{font-family:var(--mono);color:var(--muted);flex:1}
-.report-item-size{color:var(--muted2);font-size:.68rem}
+        /* Offline */
+        #offline{position:fixed;inset:0;background:rgba(3,8,15,.96);z-index:1000;display:none;align-items:center;justify-content:center;}
+        .off-box{text-align:center;max-width:380px;padding:2rem;} .off-box h2{color:var(--red);margin-bottom:1rem;font-family:var(--head);}
+        .off-box p{color:var(--muted);font-size:.88rem;margin-bottom:1rem;}
+        .cmd-box{background:#000;padding:.8rem;border-radius:10px;font-family:var(--mono);font-size:.8rem;color:var(--cyan);margin-bottom:1rem;}
+        footer{text-align:center;padding:3rem 0 1.5rem;opacity:.5;font-size:.72rem;border-top:1px solid rgba(255,255,255,.04);margin-top:3rem;}
 
-/* Loader */
-.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:4rem;gap:1rem}
-.spinner{width:40px;height:40px;border-radius:50%;
-  border:3px solid rgba(0,212,255,.08);border-top-color:var(--cyan);
-  animation:spin .7s linear infinite}
-
-/* Error */
-.error-box{text-align:center;padding:3rem}
-.error-box h3{color:var(--red);margin-bottom:.6rem;font-size:1.1rem}
-.error-box p{color:var(--muted);font-size:.84rem;margin-bottom:.6rem}
-.error-box code{background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.2);
-  border-radius:6px;padding:.3rem .7rem;font-family:var(--mono);font-size:.8rem;color:var(--red)}
-
-/* Footer */
-footer{text-align:center;padding:2rem 0;color:var(--muted2);font-size:.74rem;
-  border-top:1px solid rgba(255,255,255,.04);margin-top:1rem}
-footer a{color:var(--cyan);text-decoration:none}
-footer strong{color:var(--muted)}
-
-/* Toggle */
-.toggle-row{display:flex;align-items:center;gap:.8rem;margin-bottom:.6rem}
-.toggle{position:relative;width:44px;height:23px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0}
-.slider{position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.07);
-  border-radius:23px;border:1px solid rgba(255,255,255,.1);transition:.28s}
-.slider::before{content:'';position:absolute;width:16px;height:16px;
-  left:3px;bottom:2.5px;background:#fff;border-radius:50%;transition:.28s}
-input:checked+.slider{background:linear-gradient(135deg,var(--cyan),var(--purple))}
-input:checked+.slider::before{transform:translateX(21px)}
-.toggle-label{font-size:.8rem;color:var(--muted)}
-
-@media(max-width:900px){
-  .podium-grid,.charts-row{grid-template-columns:1fr}
-  .app{padding:0 1rem 3rem}
-}
-</style>
+        @media(max-width:900px){.podium,.chart-grid{grid-template-columns:1fr;} .app{padding:1rem;} #three-container{height:300px;}}
+    </style>
 </head>
 <body>
 <canvas id="bg-canvas"></canvas>
-<div id="root"></div>
+<div id="offline"><div class="off-box"><h2>🔌 API OFFLINE</h2><p>The backend is not running.</p><div class="cmd-box">python -m uvicorn main:app --reload</div><button onclick="location.reload()" class="btn btn-p">RETRY</button></div></div>
 
-<script type="text/babel">
-const {useState,useEffect,useRef,useCallback,useMemo} = React;
-const {
-  RadarChart,Radar,PolarGrid,PolarAngleAxis,PolarRadiusAxis,
-  BarChart,Bar,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer,
-  ScatterChart,Scatter,ZAxis,Cell,Legend
-} = Recharts;
-
-const API = 'http://127.0.0.1:8000';
-const CIRC = 2 * Math.PI * 40;
-const COLORS = ['#00d4ff','#7b2fff','#ff6b9d','#00ff88','#ffd700'];
-const TT_STYLE = {
-  backgroundColor:'rgba(4,10,20,.95)',border:'1px solid rgba(0,212,255,.25)',
-  borderRadius:'10px',fontFamily:'Space Grotesk',fontSize:'12px',color:'#dce8f8'
-};
-
-// ─── Neural Background ────────────────────────────────────────
-function useNeuralBg(enabled){
-  useEffect(()=>{
-    const c=document.getElementById('bg-canvas');
-    const x=c.getContext('2d');
-    let dots=[],raf;
-    const resize=()=>{c.width=innerWidth;c.height=innerHeight};
-    resize();addEventListener('resize',resize);
-    class D{constructor(){this.reset()}reset(){
-      this.px=Math.random()*c.width;this.py=Math.random()*c.height;
-      this.vx=(Math.random()-.5)*.3;this.vy=(Math.random()-.5)*.3;
-      this.r=Math.random()*1.6+.7;this.a=Math.random()*.4+.08;this.ph=Math.random()*6.28
-    }tick(){
-      this.px+=this.vx;this.py+=this.vy;this.ph+=.016;
-      if(this.px<0||this.px>c.width)this.vx*=-1;
-      if(this.py<0||this.py>c.height)this.vy*=-1;
-    }draw(){
-      x.beginPath();x.arc(this.px,this.py,this.r,0,6.28);
-      x.fillStyle=`rgba(0,212,255,${Math.max(0,this.a+Math.sin(this.ph)*.07)})`;x.fill();
-    }}
-    const n=Math.min(70,~~(innerWidth*innerHeight/13000));
-    dots=Array.from({length:n},()=>new D());
-    function loop(){
-      x.clearRect(0,0,c.width,c.height);
-      if(enabled){
-        for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
-          const dx=dots[i].px-dots[j].px,dy=dots[i].py-dots[j].py,d=Math.sqrt(dx*dx+dy*dy);
-          if(d<130){x.beginPath();x.moveTo(dots[i].px,dots[i].py);x.lineTo(dots[j].px,dots[j].py);
-            x.strokeStyle=`rgba(0,212,255,${(1-d/130)*.15})`;x.lineWidth=.5;x.stroke()}
-        }
-        dots.forEach(p=>{p.tick();p.draw()});
-      }
-      raf=requestAnimationFrame(loop);
-    }
-    loop();
-    return()=>{cancelAnimationFrame(raf);removeEventListener('resize',resize)};
-  },[enabled]);
-}
-
-// ─── API Hooks ────────────────────────────────────────────────
-function useApi(url,deps=[]){
-  const [data,setData]=useState(null);
-  const [error,setError]=useState(false);
-  const [loading,setLoading]=useState(true);
-  useEffect(()=>{
-    if(!url){setLoading(false);return}
-    setLoading(true);setError(false);
-    fetch(url).then(r=>r.json()).then(d=>{setData(d);setLoading(false)})
-      .catch(()=>{setError(true);setLoading(false)});
-  },deps);
-  return{data,error,loading};
-}
-
-// ─── Score Ring ───────────────────────────────────────────────
-function ScoreRing({score,rank}){
-  const ref=useRef();
-  const off=useMemo(()=>CIRC-(score/100)*CIRC,[score]);
-  const colors=[[],['url(#gGold)'],['url(#gSilver)'],['url(#gBronze)']];
-  useEffect(()=>{
-    const el=ref.current;if(!el)return;
-    setTimeout(()=>{el.style.strokeDashoffset=off},100);
-  },[off]);
-  return(
-    <div className="score-ring">
-      <svg width="90" height="90" viewBox="0 0 90 90">
-        <defs>
-          <linearGradient id="gGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ffd700"/><stop offset="100%" stopColor="#ff9500"/></linearGradient>
-          <linearGradient id="gSilver" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#d0d8e4"/><stop offset="100%" stopColor="#7090a8"/></linearGradient>
-          <linearGradient id="gBronze" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#cd9060"/><stop offset="100%" stopColor="#8b4520"/></linearGradient>
-        </defs>
-        <circle className="ring-bg" cx="45" cy="45" r="40"/>
-        <circle ref={ref} className="ring-fill" cx="45" cy="45" r="40"
-          stroke={colors[rank]||'#00d4ff'}
-          strokeDasharray={CIRC} strokeDashoffset={CIRC}/>
-      </svg>
-      <div className="ring-text">
-        <span className="ring-score">{score}</span>
-        <span className="ring-label">/ 100</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── Podium Card ──────────────────────────────────────────────
-function ModelCard({model,rank}){
-  const ref=useRef();
-  const cls=['','gold','silver','bronze'][rank]||'';
-  const handleMove=e=>{
-    const r=ref.current.getBoundingClientRect();
-    const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
-    ref.current.style.transform=`perspective(600px) rotateY(${x*13}deg) rotateX(${-y*13}deg) translateY(-8px) scale(1.02)`;
-  };
-  const handleLeave=()=>{ref.current.style.transform='';};
-  return(
-    <div ref={ref} className={`model-card ${cls}`} onMouseMove={handleMove} onMouseLeave={handleLeave}>
-      <div className="rank-num">{['','1','2','3'][rank]}</div>
-      <ScoreRing score={model.score} rank={rank}/>
-      <div className="model-name">{model.model_name}</div>
-      <div className="license-badge">{model.license}</div>
-      <div className="justification">{model.justification}</div>
-      <div className="metrics-grid">
-        {[
-          ['🧠 Intel',model.intelligence_score],
-          ['🏟 ELO',model.arena_elo||'N/A'],
-          ['💰 Cost',`$${model.cost_per_1m_tokens}/1M`],
-          ['⚡ Speed',`${model.speed_tokens_sec} t/s`],
-        ].map(([k,v])=>(
-          <div className="metric" key={k}>
-            <div className="metric-key">{k}</div>
-            <div className="metric-val">{v}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Charts ───────────────────────────────────────────────────
-function BarCharts({data}){
-  const top7=data.slice(0,7);
-  const short=n=>n.length>13?n.slice(0,13)+'…':n;
-  return(
-    <div className="card card-pad">
-      <div className="chart-title">📡 Composite Score — Top 7</div>
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={top7.map(m=>({name:short(m.model_name),score:m.score}))} margin={{top:4,right:4,left:-20,bottom:0}}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/>
-          <XAxis dataKey="name" tick={{fill:'#6a8aaa',fontSize:10,fontFamily:'Space Grotesk'}} axisLine={false} tickLine={false}/>
-          <YAxis tick={{fill:'#6a8aaa',fontSize:10}} domain={[50,100]} axisLine={false} tickLine={false}/>
-          <Tooltip contentStyle={TT_STYLE}/>
-          <Bar dataKey="score" radius={[8,8,0,0]}>
-            {top7.map((_,i)=><Cell key={i} fill={i===0?'#00d4ff':i===1?'#7b2fff':'rgba(0,212,255,.55)'}/>)}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function RadarChartComp({data}){
-  const dims=['intelligence','arena_elo','cost','speed','latency','context'];
-  const labels=['Intel','ELO','Cost','Speed','Latency','Context'];
-  const top3=data.slice(0,3);
-  const rdata=labels.map((l,i)=>({dim:l,...Object.fromEntries(top3.map((m,j)=>[j,m.breakdown?.[dims[i]]||0]))}));
-  return(
-    <div className="card card-pad">
-      <div className="chart-title">🕸 Multi-Dimension Radar — Top 3</div>
-      <ResponsiveContainer width="100%" height={220}>
-        <RadarChart data={rdata}>
-          <PolarGrid stroke="rgba(255,255,255,.06)"/>
-          <PolarAngleAxis dataKey="dim" tick={{fill:'#6a8aaa',fontSize:10,fontFamily:'Space Grotesk'}}/>
-          <PolarRadiusAxis domain={[0,100]} tick={false} axisLine={false}/>
-          {top3.map((m,i)=>(
-            <Radar key={i} name={m.model_name} dataKey={i}
-              stroke={COLORS[i]} fill={COLORS[i]} fillOpacity={.07}
-              strokeWidth={2} dot={{r:3}}/>
-          ))}
-          <Legend wrapperStyle={{fontSize:'11px',color:'#6a8aaa',fontFamily:'Space Grotesk'}}/>
-          <Tooltip contentStyle={TT_STYLE}/>
-        </RadarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function BubbleChart({data}){
-  return(
-    <div className="card card-pad">
-      <div className="chart-title">💰 Cost vs Intelligence (bubble = speed)</div>
-      <ResponsiveContainer width="100%" height={240}>
-        <ScatterChart margin={{top:8,right:8,left:-16,bottom:8}}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)"/>
-          <XAxis dataKey="x" name="Cost/1M" unit="$" tick={{fill:'#6a8aaa',fontSize:10}} axisLine={false} tickLine={false} label={{value:'Cost/1M ($)',fill:'#6a8aaa',fontSize:10,position:'insideBottom',offset:-4}}/>
-          <YAxis dataKey="y" name="Intelligence" domain={[65,100]} tick={{fill:'#6a8aaa',fontSize:10}} axisLine={false} tickLine={false}/>
-          <ZAxis dataKey="z" range={[30,300]}/>
-          <Tooltip contentStyle={TT_STYLE} cursor={{strokeDasharray:'3 3'}}
-            content={({payload})=>{
-              if(!payload?.length)return null;
-              const d=payload[0].payload;
-              return <div style={TT_STYLE}><b style={{color:'#00d4ff'}}>{d.name}</b><br/>Intel: {d.y} | Cost: ${d.x}<br/>Speed: {d.z} t/s</div>;
-            }}/>
-          <Scatter data={data.map(m=>({x:m.cost_per_1m_tokens,y:m.intelligence_score,z:m.speed_tokens_sec,name:m.model_name}))}
-            fill="rgba(0,212,255,.6)" stroke="rgba(0,212,255,.9)" strokeWidth={1}/>
-        </ScatterChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function EloChart({data}){
-  const top10=[...data].filter(m=>m.arena_elo).sort((a,b)=>b.arena_elo-a.arena_elo).slice(0,10);
-  const short=n=>n.length>14?n.slice(0,14)+'…':n;
-  return(
-    <div className="card card-pad">
-      <div className="chart-title">🏟 LMSYS Arena ELO Rankings</div>
-      <ResponsiveContainer width="100%" height={240}>
-        <BarChart data={top10.map(m=>({name:short(m.model_name),elo:m.arena_elo}))}
-          layout="vertical" margin={{top:4,right:16,left:10,bottom:4}}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.04)" horizontal={false}/>
-          <XAxis type="number" domain={['dataMin-40','dataMax+10']} tick={{fill:'#6a8aaa',fontSize:10}} axisLine={false} tickLine={false}/>
-          <YAxis type="category" dataKey="name" width={100} tick={{fill:'#8899bb',fontSize:9,fontFamily:'Space Grotesk'}} axisLine={false} tickLine={false}/>
-          <Tooltip contentStyle={TT_STYLE}/>
-          <Bar dataKey="elo" radius={[0,7,7,0]}>
-            {top10.map((_,i)=><Cell key={i} fill={i===0?'#7b2fff':i<3?'rgba(123,47,255,.7)':'rgba(123,47,255,.45)'}/>)}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// ─── Comparison ───────────────────────────────────────────────
-function ModelComparison({data}){
-  const [sel,setSel]=useState(new Set());
-  const toggle=name=>{
-    setSel(prev=>{
-      const n=new Set(prev);
-      if(n.has(name))n.delete(name);
-      else if(n.size<5)n.add(name);
-      return n;
-    });
-  };
-  const dims=['intelligence','arena_elo','cost','speed','latency','context'];
-  const labels=['Intel','ELO','Cost','Speed','Latency','Context'];
-  const selData=data.filter(m=>sel.has(m.model_name));
-  const rdata=sel.size>=2?labels.map((l,i)=>({dim:l,...Object.fromEntries(selData.map(m=>[m.model_name,m.breakdown?.[dims[i]]||0]))})):[];
-  return(
-    <div className="comp-wrap">
-      <div className="section-title"><h2>⚔️ Model Comparison</h2></div>
-      <div className="card card-pad">
-        <div className="comp-hint">Select 2–5 models to compare across all dimensions</div>
-        <div className="comp-pills">
-          {data.map(m=>(
-            <button key={m.model_name} className={`comp-pill${sel.has(m.model_name)?' sel':''}`}
-              onClick={()=>toggle(m.model_name)}>{m.model_name}</button>
-          ))}
+<div class="app">
+    <!-- HEADER -->
+    <header class="header fade">
+        <div class="badge">⚡ EPINEON AI Research · Challenge ESITH 2026</div>
+        <h1 class="title">LLM INTELLIGENCE<br>MONITOR</h1>
+        <p class="subtitle">Real-time Scoring · Multi-Model Comparison · Enterprise Recommendations · Auto-Reports</p>
+        <div class="author-bar">
+            <span id="dot-status" class="dot dot-off"></span>
+            <span id="status-label">CONNECTING...</span>
+            <span style="opacity:.2">|</span>
+            <span>SYSTEM ARCHITECT</span>
+            <strong>EL KHOBZI Ismail</strong>
         </div>
-        {sel.size>=2?(
-          <ResponsiveContainer width="100%" height={280}>
-            <RadarChart data={rdata}>
-              <PolarGrid stroke="rgba(255,255,255,.06)"/>
-              <PolarAngleAxis dataKey="dim" tick={{fill:'#6a8aaa',fontSize:11,fontFamily:'Space Grotesk'}}/>
-              <PolarRadiusAxis domain={[0,100]} tick={false} axisLine={false}/>
-              {selData.map((m,i)=>(
-                <Radar key={i} name={m.model_name} dataKey={m.model_name}
-                  stroke={COLORS[i%5]} fill={COLORS[i%5]} fillOpacity={.07} strokeWidth={2} dot={{r:3}}/>
-              ))}
-              <Legend wrapperStyle={{fontSize:'11px',color:'#6a8aaa',fontFamily:'Space Grotesk'}}/>
-              <Tooltip contentStyle={TT_STYLE}/>
-            </RadarChart>
-          </ResponsiveContainer>
-        ):(
-          <div style={{textAlign:'center',padding:'2.5rem',color:'var(--muted2)',fontSize:'.82rem'}}>
-            Select at least 2 models to see the comparison radar ☝️
-          </div>
-        )}
-      </div>
+    </header>
+
+    <!-- PROFILE TABS + TOGGLES -->
+    <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:.8rem;" class="fade">
+        <div id="profile-tabs" class="tabs"></div>
+        <div>
+            <div class="tgl-row"><label class="tgl"><input type="checkbox" id="tgl-commercial"><span class="tgl-s"></span></label><span class="tgl-t">Commercial only</span></div>
+        </div>
     </div>
-  );
-}
 
-// ─── Market Movements ─────────────────────────────────────────
-function MarketMovements(){
-  const{data,loading}=useApi(`${API}/models/movements`,[]);
-  if(loading)return null;
-  const items=[
-    ...(data?.new_arrivals||[]).map(m=>({type:'new',name:m.name,detail:`First detected ${m.first_seen?new Date(m.first_seen).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'recently'}`})),
-    ...(data?.price_drops||[]).map(m=>({type:'drop',name:m.name,detail:`$${m.old_cost} → $${m.new_cost}`})),
-  ];
-  return(
-    <div className="mv-wrap">
-      <div className="section-title"><h2>📈 Market Movements</h2></div>
-      {items.length===0?(
-        <div className="card card-pad" style={{color:'var(--muted)',fontSize:'.85rem'}}>
-          ✅ No significant movements detected — all models stable.
-          <span style={{display:'block',marginTop:'.4rem',color:'var(--muted2)',fontSize:'.75rem'}}>
-            {data?.total_models} models tracked across all providers.
-          </span>
-        </div>
-      ):(
-        <div className="mv-grid">
-          {items.map((item,i)=>(
-            <div className="mv-item" key={i} style={{animationDelay:`${i*40}ms`}}>
-              <div className="mv-icon">{item.type==='new'?'✨':'💸'}</div>
-              <div className="mv-info">
-                <div className="mv-name">{item.name}</div>
-                <div className="mv-detail">{item.detail}</div>
-              </div>
-              <span className={`mv-badge ${item.type==='new'?'badge-new':'badge-drop'}`}>
-                {item.type==='new'?'NEW':`-${item.pct}%`}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+    <!-- STAT CHIPS -->
+    <div id="stat-chips" class="chips fade"></div>
+
+    <!-- 🏆 TOP 3 PODIUM -->
+    <div class="sec"><h2>🏆 Top 3 Recommendations</h2></div>
+    <div id="podium" class="podium fade"></div>
+
+    <!-- 📋 FULL RANKINGS TABLE -->
+    <div class="sec"><h2>📋 Full Rankings</h2></div>
+    <div class="card" style="padding:0;">
+        <div class="tbl-wrap"><table>
+            <thead id="tbl-head"></thead>
+            <tbody id="tbl-body"></tbody>
+        </table></div>
     </div>
-  );
-}
 
-// ─── Report Section ───────────────────────────────────────────
-function ReportSection(){
-  const [report,setReport]=useState('');
-  const [loading,setLoading]=useState(false);
-  const gen=async()=>{
-    setLoading(true);setReport('');
-    try{const r=await fetch(`${API}/report`);setReport(await r.text())}
-    catch{setReport('Error: API not reachable.')}
-    finally{setLoading(false)};
-  };
-  const dl=()=>{
-    if(!report)return;
-    const b=new Blob([report],{type:'text/markdown'});
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(b);
-    a.download=`epineon_digest_${new Date().toISOString().slice(0,10)}.md`;
-    a.click();
-  };
-  return(
-    <div className="report-wrap">
-      <div className="section-title"><h2>📄 Auto-Generated Digest Report</h2></div>
-      <div className="card card-pad">
-        <div className="report-preview">
-          {loading?'⚡ Generating digest...':report||'Click "Generate Report" to create a full analysis digest with Top 5 rankings, market movements, and summary statistics.'}
-        </div>
-        <div className="report-actions">
-          <button className="btn btn-primary" onClick={gen} disabled={loading}>
-            {loading?'Generating…':'⚡ Generate Report'}
-          </button>
-          <button className="btn btn-secondary" onClick={dl} disabled={!report}>📥 Download .md</button>
-        </div>
-      </div>
+    <!-- 📊 CHARTS ROW 1 -->
+    <div class="sec"><h2>📊 Analytics</h2></div>
+    <div class="chart-grid">
+        <div class="card p-6 chart-box"><div class="ct">🏆 Composite Score — Top 7</div><div style="flex:1;position:relative;"><canvas id="ch-bar"></canvas></div></div>
+        <div class="card p-6 chart-box"><div class="ct">🕸 Capability Radar — #1 Model</div><div style="flex:1;position:relative;"><canvas id="ch-radar"></canvas></div></div>
     </div>
-  );
-}
 
-// ─── Scheduler Status ─────────────────────────────────────────
-function SchedulerStatus(){
-  const[status,setStatus]=useState(null);
-  const[triggering,setTriggering]=useState(false);
-  const fetch_status=()=>{
-    fetch(`${API}/scheduler/status`).then(r=>r.json()).then(setStatus).catch(()=>{});
-  };
-  useEffect(()=>{fetch_status();const t=setInterval(fetch_status,8000);return()=>clearInterval(t)},[]);
-  const trigger=async()=>{
-    setTriggering(true);
-    try{await fetch(`${API}/scheduler/run`,{method:'POST'});}catch{}
-    setTimeout(()=>{setTriggering(false);fetch_status();},2000);
-  };
-  if(!status)return null;
-  const fmt=iso=>{if(!iso)return'—';try{return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return iso}};
-  return(
-    <div className="sched-wrap">
-      <div className="section-title"><h2>🤖 Automated Pipeline Status</h2></div>
-      <div className="card card-pad">
-        <div style={{display:'flex',alignItems:'center',gap:'1rem',marginBottom:'1.2rem',flexWrap:'wrap'}}>
-          {status.running&&<span className="running-badge"><span className="status-dot online"/>Pipeline running…</span>}
-          <button className="btn btn-danger" onClick={trigger} disabled={triggering||status.running}>
-            {triggering?'Triggering…':'▶ Run Now'}
-          </button>
-          <span style={{fontSize:'.72rem',color:'var(--muted2)'}}>Total runs: <b style={{color:'var(--cyan)'}}>{status.total_runs||0}</b></span>
-        </div>
-        <div className="sched-grid">
-          {[
-            ['Status',status.last_status||'—'],
-            ['Last Run',fmt(status.last_run)],
-            ['Next Run',fmt(status.next_run)],
-            ['Reports Saved',status.reports?.length||0],
-          ].map(([l,v])=>(
-            <div className="sched-stat" key={l}>
-              <div className="sched-stat-label">{l}</div>
-              <div className="sched-stat-val">{v}</div>
-            </div>
-          ))}
-        </div>
-        {status.reports?.length>0&&(
-          <>
-            <div style={{fontSize:'.65rem',color:'var(--muted2)',textTransform:'uppercase',letterSpacing:'.14em',marginBottom:'.5rem'}}>Recent Reports</div>
-            <div className="reports-list">
-              {status.reports.map((r,i)=>(
-                <div className="report-item" key={i}>
-                  <span className="report-item-name">📄 {r.filename}</span>
-                  <span className="report-item-size">{r.size_kb} KB</span>
-                  <span style={{fontSize:'.68rem',color:'var(--muted2)'}}>{fmt(r.generated)}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+    <!-- 📊 CHARTS ROW 2 -->
+    <div class="chart-grid" style="margin-top:1.2rem;">
+        <div class="card p-6 chart-box"><div class="ct">🏟 Arena ELO Rankings</div><div style="flex:1;position:relative;"><canvas id="ch-elo"></canvas></div></div>
+        <div class="card p-6 chart-box"><div class="ct">📜 License Distribution</div><div style="flex:1;position:relative;"><canvas id="ch-license"></canvas></div></div>
     </div>
-  );
-}
 
-// ─── Main App ─────────────────────────────────────────────────
-function App(){
-  const [profile,setProfile]=useState(null);
-  const [commercial,setCommercial]=useState(false);
-  const [neuralBg,setNeuralBg]=useState(true);
-  const [recs,setRecs]=useState([]);
-  const [recLoading,setRecLoading]=useState(true);
-  const [recError,setRecError]=useState(false);
-  const [online,setOnline]=useState(false);
-  const [profiles,setProfiles]=useState([]);
-  const [reportMd,setReportMd]=useState('');
-
-  useNeuralBg(neuralBg);
-
-  // Load profiles once on mount
-  useEffect(()=>{
-    fetch(`${API}/profiles`)
-      .then(r=>r.json())
-      .then(d=>{setProfiles(d.profiles);setProfile(d.profiles[0]);setOnline(true)})
-      .catch(()=>{setOnline(false);setRecLoading(false);setRecError(true)});
-  },[]);
-
-  // Load recommendations when profile or commercial changes
-  useEffect(()=>{
-    if(!profile)return;
-    setRecLoading(true);setRecError(false);
-    fetch(`${API}/recommend?profile=${encodeURIComponent(profile)}&commercial=${commercial}&top_k=50`)
-      .then(r=>r.json())
-      .then(d=>{setRecs(d.recommendations||[]);setRecLoading(false)})
-      .catch(()=>{setRecError(true);setRecLoading(false)});
-  },[profile,commercial]);
-
-  const sortedRecs=useMemo(()=>[...recs].sort((a,b)=>b.score-a.score),[recs]);
-  const CF=v=>v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'K';
-
-  return(
-    <div className="app">
-      {/* Header */}
-      <header className="header">
-        <div className="header-badge">⚡ EPINEON AI Research · Challenge ESITH 2026</div>
-        <h1>LLM INTELLIGENCE<br/>MONITOR</h1>
-        <p>Real-time scoring · Comparison · Enterprise Recommendations · Auto-Reports</p>
-        <div className="author-tag">
-          <span className={`status-dot ${online?'online':'offline'}`}/>
-          <span>{online?'API Connected':'API Offline'}</span>
-          <span style={{color:'rgba(255,255,255,.12)'}}>|</span>
-          <span>By</span>
-          <strong>EL KHOBZI Ismail</strong>
-        </div>
-      </header>
-
-      {/* Controls */}
-      <div className="profile-wrap">
-        <div style={{display:'flex',gap:'2rem',flexWrap:'wrap',alignItems:'flex-end',marginBottom:'1rem'}}>
-          <div className="profile-row">
-            {profiles.map(p=>(
-              <button key={p} className={`profile-btn${p===profile?' active':''}`} onClick={()=>setProfile(p)}>{p}</button>
-            ))}
-          </div>
-          <div>
-            <div className="toggle-row">
-              <label className="toggle"><input type="checkbox" checked={commercial} onChange={e=>setCommercial(e.target.checked)}/><span className="slider"/></label>
-              <span className="toggle-label">Commercial only</span>
-            </div>
-            <div className="toggle-row">
-              <label className="toggle"><input type="checkbox" checked={neuralBg} onChange={e=>setNeuralBg(e.target.checked)}/><span className="slider"/></label>
-              <span className="toggle-label">Neural background</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats bar */}
-      <div className="stats-bar">
-        {[
-          ['Models',sortedRecs.length],
-          ['Profile',profile],
-          ['Top Score',sortedRecs[0]?.score||'—'],
-          ['Arena Leader',sortedRecs[0]?.arena_elo||'—'],
-          ['Updated',new Date().toLocaleTimeString()],
-        ].map(([k,v])=>(
-          <div className="stat-chip" key={k}>{k}: <b>{v}</b></div>
-        ))}
-      </div>
-
-      {/* Error */}
-      {recError&&(
-        <div className="card" style={{marginBottom:'2rem'}}>
-          <div className="error-box">
-            <h3>🔌 API Not Reachable</h3>
-            <p>Start the backend first:</p>
-            <code>python -m uvicorn main:app --reload</code>
-            <p style={{marginTop:'.7rem'}}>Then refresh this page.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Podium */}
-      {!recError&&(
-        <>
-          <div className="section-title"><h2>🏆 Top Recommendations</h2></div>
-          {recLoading?(
-            <div className="loader"><div className="spinner"/></div>
-          ):(
-            <div className="podium-grid">
-              {sortedRecs.slice(0,3).map((m,i)=><ModelCard key={m.model_name} model={m} rank={i+1}/>)}
-            </div>
-          )}
-
-          {/* Full Table */}
-          {!recLoading&&(
-            <div className="table-wrap">
-              <div className="section-title"><h2>📋 Full Rankings</h2></div>
-              <div className="card" style={{padding:0}}>
-                <div className="table-scroll">
-                  <table>
-                    <thead><tr>
-                      {['#','Model','Score','Intel','ELO','Cost/1M','Speed','Context','License'].map(h=>(
-                        <th key={h} style={h==='#'?{paddingLeft:'1.2rem'}:{}}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {sortedRecs.map((m,i)=>{
-                        const max=sortedRecs[0]?.score||1;
-                        return(
-                          <tr key={m.model_name} style={{animationDelay:`${i*25}ms`}}>
-                            <td style={{paddingLeft:'1.2rem'}}><span className="rank-n">{i+1}</span></td>
-                            <td style={{fontWeight:600}}>{m.model_name}</td>
-                            <td>
-                              <div className="score-bar-wrap">
-                                <div className="score-bar">
-                                  <div className="score-bar-fill" style={{width:`${(m.score/max*100).toFixed(1)}%`}}/>
-                                </div>
-                                <span className="score-num">{m.score}</span>
-                              </div>
-                            </td>
-                            <td>{m.intelligence_score}</td>
-                            <td>{m.arena_elo||'—'}</td>
-                            <td>${m.cost_per_1m_tokens}</td>
-                            <td>{m.speed_tokens_sec} t/s</td>
-                            <td>{CF(m.context_window)}</td>
-                            <td><span className="tag">{m.license}</span></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Charts */}
-          {!recLoading&&sortedRecs.length>0&&(
-            <>
-              <div className="section-title"><h2>📊 Visualizations</h2></div>
-              <div className="charts-row">
-                <BarCharts data={sortedRecs}/>
-                <RadarChartComp data={sortedRecs}/>
-              </div>
-              <div className="charts-row">
-                <BubbleChart data={sortedRecs}/>
-                <EloChart data={sortedRecs}/>
-              </div>
-              <ModelComparison data={sortedRecs}/>
-            </>
-          )}
-        </>
-      )}
-
-      <MarketMovements/>
-      <ReportSection/>
-      <SchedulerStatus/>
-
-      <footer>
-        <strong>EPINEON AI</strong> · LLM Intelligence Monitor ·
-        Built by <a href="#">EL KHOBZI Ismail</a> · ESITH Technical Challenge 2026<br/>
-        <span style={{opacity:.6}}>FastAPI · SQLite · React · Recharts · Chart.js · APScheduler</span>
-        <span style={{opacity:.5}}> · Data: Artificial Analysis · LMSYS Arena · HuggingFace · OpenRouter</span>
-      </footer>
+    <!-- 💰 BUBBLE CHART -->
+    <div class="chart-grid" style="margin-top:1.2rem;">
+        <div class="card p-6 chart-box"><div class="ct">💰 Cost vs Intelligence (bubble = speed)</div><div style="flex:1;position:relative;"><canvas id="ch-bubble"></canvas></div></div>
+        <div class="card p-6 chart-box"><div class="ct">⚡ Speed vs Latency</div><div style="flex:1;position:relative;"><canvas id="ch-scatter"></canvas></div></div>
     </div>
-  );
-}
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
+    <!-- 🌐 3D INTERACTIVE -->
+    <div class="sec"><h2>🌐 3D Model Landscape</h2></div>
+    <div class="card p-6">
+        <div class="ct">Interactive 3D Score Map — Click & drag to rotate, scroll to zoom</div>
+        <div id="three-container"><div id="three-tooltip"></div></div>
+    </div>
 
-<!-- Neural background canvas activation -->
+    <!-- ⚔️ MODEL COMPARISON -->
+    <div class="sec"><h2>⚔️ Model Comparison</h2></div>
+    <div class="card p-6">
+        <div class="cmp-hint">Select 2–5 models to compare across all 6 dimensions</div>
+        <div id="cmp-pills" class="cmp-pills"></div>
+        <div style="height:320px;position:relative;"><canvas id="ch-compare"></canvas></div>
+    </div>
+
+    <!-- 📈 MARKET MOVEMENTS -->
+    <div class="sec"><h2>📈 Market Movements</h2></div>
+    <div id="movements" class="mv-grid"></div>
+
+    <!-- 📄 REPORT -->
+    <div class="sec"><h2>📄 Auto-Generated Digest Report</h2></div>
+    <div class="card p-6">
+        <div id="rpt-content" class="rpt-pre">Click "Generate Report" to create a full analysis digest with Top 5 rankings per profile, market movements, and summary statistics.</div>
+        <div class="rpt-acts">
+            <button class="btn btn-p" id="btn-gen" onclick="genReport()">⚡ Generate Report</button>
+            <button class="btn btn-s" id="btn-dl" onclick="dlReport()" disabled>📥 Download .md</button>
+        </div>
+    </div>
+
+    <!-- 🤖 SCHEDULER -->
+    <div class="sec"><h2>🤖 Automated Pipeline Status</h2></div>
+    <div class="card p-6">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+            <button class="btn btn-d" id="btn-run" onclick="triggerPipeline()">▶ Run Pipeline Now</button>
+            <span id="run-count" style="font-size:.72rem;color:var(--muted2);">Total runs: <b style="color:var(--cyan);">0</b></span>
+        </div>
+        <div id="sch-grid" class="sch-grid"></div>
+    </div>
+
+    <footer>
+        DESIGNED & DEVELOPED BY <strong style="color:var(--cyan);">EL KHOBZI ISMAIL</strong> · ESITH CHALLENGE 2026<br>
+        FASTAPI · SQLITE · CHART.JS · THREE.JS · APSCHEDULER
+    </footer>
+</div>
+
 <script>
-// Activate score bar fills after React renders
-document.addEventListener('DOMContentLoaded',()=>{
-  const obs=new MutationObserver(()=>{
-    document.querySelectorAll('.score-bar-fill[style]').forEach(el=>{
-      if(!el.dataset.animated){el.dataset.animated='1'}
-    });
-  });
-  obs.observe(document.body,{subtree:true,childList:true,attributes:true});
+const API = location.origin;
+let ALL_MODELS = [], CHARTS = {}, CMP_SEL = new Set(), CURRENT_REPORT = '';
+
+// ─── INIT ──────────────────────────────────────────────────
+async function init() {
+    try {
+        const [pRes, sRes] = await Promise.all([
+            fetch(`${API}/profiles`).then(r => r.json()),
+            fetch(`${API}/scheduler/status`).then(r => r.json()).catch(() => null)
+        ]);
+        renderTabs(pRes.profiles);
+        if (sRes) updateScheduler(sRes);
+        setStatus(true);
+        loadProfile(pRes.profiles[0]);
+        loadMovements();
+        setInterval(() => fetch(`${API}/scheduler/status`).then(r=>r.json()).then(updateScheduler).catch(()=>{}), 10000);
+    } catch(e) { document.getElementById('offline').style.display = 'flex'; }
+}
+
+function setStatus(on) {
+    document.getElementById('dot-status').className = 'dot ' + (on ? 'dot-on' : 'dot-off');
+    document.getElementById('status-label').textContent = on ? 'ENGINE ACTIVE' : 'OFFLINE';
+}
+
+// ─── TABS ──────────────────────────────────────────────────
+function renderTabs(profiles) {
+    const c = document.getElementById('profile-tabs');
+    c.innerHTML = profiles.map((p,i) => `<button class="tab ${i===0?'on':''}" onclick="switchProfile(this,'${p}')">${p}</button>`).join('');
+}
+function switchProfile(btn, p) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    loadProfile(p);
+}
+
+// ─── LOAD PROFILE ──────────────────────────────────────────
+async function loadProfile(p) {
+    const comm = document.getElementById('tgl-commercial').checked;
+    const res = await fetch(`${API}/recommend?profile=${encodeURIComponent(p)}&commercial=${comm}&top_k=50`).then(r=>r.json());
+    ALL_MODELS = res.recommendations || [];
+    renderChips(p);
+    renderPodium(ALL_MODELS.slice(0,3));
+    renderTable(ALL_MODELS);
+    renderCharts(ALL_MODELS);
+    render3D(ALL_MODELS);
+    renderComparisonPills(ALL_MODELS);
+}
+
+document.getElementById('tgl-commercial').addEventListener('change', () => {
+    const active = document.querySelector('.tab.on');
+    if (active) loadProfile(active.textContent);
 });
+
+// ─── STAT CHIPS ────────────────────────────────────────────
+function renderChips(p) {
+    const c = document.getElementById('stat-chips');
+    const top = ALL_MODELS[0];
+    c.innerHTML = [
+        ['Models', ALL_MODELS.length], ['Profile', p],
+        ['Top Score', top?.score || '—'], ['Arena Leader', top?.model_name || '—'],
+        ['Updated', new Date().toLocaleTimeString()]
+    ].map(([k,v]) => `<div class="chip">${k}: <b>${v}</b></div>`).join('');
+}
+
+// ─── PODIUM ────────────────────────────────────────────────
+function renderPodium(top3) {
+    const c = document.getElementById('podium');
+    c.innerHTML = top3.map((m,i) => `
+        <div class="card pod p-6">
+            <div class="rk rk${i+1}">#${i+1}</div>
+            <div class="pod-score">${m.score}</div>
+            <div class="pod-name">${m.model_name}</div>
+            <div class="pod-just">${m.justification}</div>
+            <div class="pod-stats">
+                <div class="ps"><div class="ps-l">Intelligence</div><div class="ps-v" style="color:var(--cyan)">${m.intelligence_score}</div></div>
+                <div class="ps"><div class="ps-l">Arena ELO</div><div class="ps-v" style="color:var(--purple)">${m.arena_elo||'N/A'}</div></div>
+                <div class="ps"><div class="ps-l">Cost/1M</div><div class="ps-v">$${m.cost_per_1m_tokens}</div></div>
+                <div class="ps"><div class="ps-l">Speed</div><div class="ps-v">${m.speed_tokens_sec} t/s</div></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ─── FULL RANKINGS TABLE ───────────────────────────────────
+let sortCol = 'score', sortAsc = false;
+function renderTable(models) {
+    const cols = [
+        {key:'rank',label:'#'}, {key:'name',label:'Model'}, {key:'score',label:'Score'},
+        {key:'intel',label:'Intel'}, {key:'elo',label:'ELO'}, {key:'cost',label:'Cost/1M'},
+        {key:'speed',label:'Speed'}, {key:'ctx',label:'Context'}, {key:'lic',label:'License'}
+    ];
+    document.getElementById('tbl-head').innerHTML = '<tr>' + cols.map(c =>
+        `<th onclick="sortTable('${c.key}')" style="${c.key==='rank'?'padding-left:1rem':''}">${c.label} ${sortCol===c.key?(sortAsc?'↑':'↓'):''}</th>`
+    ).join('') + '</tr>';
+
+    const sorted = [...models];
+    const max = sorted[0]?.score || 1;
+    const fmtCtx = v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : (v/1000).toFixed(0)+'K';
+
+    document.getElementById('tbl-body').innerHTML = sorted.map((m,i) => `
+        <tr>
+            <td style="padding-left:1rem"><span class="rn">${i+1}</span></td>
+            <td style="font-weight:600">${m.model_name}</td>
+            <td><div class="sb"><div class="sb-bar"><div class="sb-fill" style="width:${(m.score/max*100).toFixed(1)}%"></div></div><span class="sb-n">${m.score}</span></div></td>
+            <td>${m.intelligence_score}</td>
+            <td>${m.arena_elo||'—'}</td>
+            <td>$${m.cost_per_1m_tokens}</td>
+            <td>${m.speed_tokens_sec} t/s</td>
+            <td>${fmtCtx(m.context_window)}</td>
+            <td><span class="tag">${m.license}</span></td>
+        </tr>
+    `).join('');
+}
+function sortTable(col) {
+    if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = false; }
+    const key = {rank:'score',name:'model_name',score:'score',intel:'intelligence_score',elo:'arena_elo',cost:'cost_per_1m_tokens',speed:'speed_tokens_sec',ctx:'context_window',lic:'license'}[col] || 'score';
+    ALL_MODELS.sort((a,b) => {
+        let va = a[key]??0, vb = b[key]??0;
+        if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortAsc ? va-vb : vb-va;
+    });
+    renderTable(ALL_MODELS);
+}
+
+// ─── CHARTS ────────────────────────────────────────────────
+const TTStyle = {backgroundColor:'rgba(4,10,20,.95)',borderColor:'rgba(0,212,255,.3)',titleColor:'#00d4ff',bodyColor:'#dce8f8',titleFont:{family:'Space Grotesk'},bodyFont:{family:'Space Grotesk',size:11},cornerRadius:10,padding:10};
+function destroyChart(id) { if(CHARTS[id]) { CHARTS[id].destroy(); delete CHARTS[id]; } }
+
+function renderCharts(models) {
+    const top7 = models.slice(0,7);
+    const short = n => n.length > 13 ? n.slice(0,11)+'…' : n;
+
+    // Bar chart
+    destroyChart('bar');
+    CHARTS.bar = new Chart(document.getElementById('ch-bar'), {
+        type:'bar', data:{
+            labels: top7.map(m=>short(m.model_name)),
+            datasets:[{data:top7.map(m=>m.score),backgroundColor:top7.map((_,i)=>i===0?'rgba(0,212,255,.7)':i===1?'rgba(123,47,255,.7)':'rgba(0,212,255,.35)'),borderColor:top7.map((_,i)=>i===0?'#00d4ff':i===1?'#7b2fff':'rgba(0,212,255,.5)'),borderWidth:2,borderRadius:8}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TTStyle},scales:{y:{min:50,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa',font:{size:10}}},x:{grid:{display:false},ticks:{color:'#6a8aaa',font:{size:9}}}}}
+    });
+
+    // Radar
+    destroyChart('radar');
+    const bd = models[0]?.breakdown || {};
+    CHARTS.radar = new Chart(document.getElementById('ch-radar'), {
+        type:'radar', data:{
+            labels:['Intelligence','Arena ELO','Cost','Speed','Latency','Context'],
+            datasets:[{label:models[0]?.model_name,data:[bd.intelligence,bd.arena_elo,bd.cost,bd.speed,bd.latency,bd.context],backgroundColor:'rgba(0,212,255,.15)',borderColor:'#00d4ff',pointBackgroundColor:'#00d4ff',borderWidth:2}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6a8aaa',font:{family:'Space Grotesk',size:10}}},tooltip:TTStyle},scales:{r:{min:0,max:100,grid:{color:'rgba(255,255,255,.06)'},angleLines:{color:'rgba(255,255,255,.06)'},ticks:{display:false},pointLabels:{color:'#6a8aaa',font:{size:10}}}}}
+    });
+
+    // ELO horizontal bar
+    destroyChart('elo');
+    const eloModels = [...models].filter(m=>m.arena_elo).sort((a,b)=>b.arena_elo-a.arena_elo).slice(0,10);
+    CHARTS.elo = new Chart(document.getElementById('ch-elo'), {
+        type:'bar', data:{
+            labels:eloModels.map(m=>short(m.model_name)),
+            datasets:[{data:eloModels.map(m=>m.arena_elo),backgroundColor:eloModels.map((_,i)=>i===0?'rgba(123,47,255,.8)':i<3?'rgba(123,47,255,.55)':'rgba(123,47,255,.3)'),borderRadius:6}]
+        }, options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TTStyle},scales:{x:{min:1100,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#8899bb',font:{family:'Space Grotesk',size:9}}}}}
+    });
+
+    // License donut
+    destroyChart('license');
+    const licCounts = {};
+    models.forEach(m => { const l = m.license||'Unknown'; licCounts[l] = (licCounts[l]||0)+1; });
+    const licLabels = Object.keys(licCounts);
+    const licColors = ['rgba(0,212,255,.7)','rgba(123,47,255,.7)','rgba(255,107,157,.7)','rgba(0,255,136,.7)','rgba(255,215,0,.7)'];
+    CHARTS.license = new Chart(document.getElementById('ch-license'), {
+        type:'doughnut', data:{
+            labels:licLabels, datasets:[{data:Object.values(licCounts),backgroundColor:licColors.slice(0,licLabels.length),borderColor:'transparent',borderWidth:0}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6a8aaa',font:{family:'Space Grotesk',size:10},padding:15}},tooltip:TTStyle},cutout:'65%'}
+    });
+
+    // Bubble (cost vs intelligence)
+    destroyChart('bubble');
+    CHARTS.bubble = new Chart(document.getElementById('ch-bubble'), {
+        type:'bubble', data:{
+            datasets:[{label:'Models',data:models.map(m=>({x:m.cost_per_1m_tokens,y:m.intelligence_score,r:Math.max(3,m.speed_tokens_sec/25),name:m.model_name})),backgroundColor:'rgba(0,212,255,.4)',borderColor:'rgba(0,212,255,.8)',borderWidth:1}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TTStyle,callbacks:{label:ctx=>`${ctx.raw.name}: Intel ${ctx.raw.y}, Cost $${ctx.raw.x}`}}},scales:{x:{title:{display:true,text:'Cost/1M ($)',color:'#6a8aaa',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa',font:{size:10}}},y:{min:70,max:100,title:{display:true,text:'Intelligence',color:'#6a8aaa',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa',font:{size:10}}}}}
+    });
+
+    // Scatter (speed vs latency)
+    destroyChart('scatter');
+    CHARTS.scatter = new Chart(document.getElementById('ch-scatter'), {
+        type:'scatter', data:{
+            datasets:[{label:'Models',data:models.map(m=>({x:m.speed_tokens_sec,y:m.ttft_latency,name:m.model_name})),backgroundColor:'rgba(123,47,255,.5)',borderColor:'rgba(123,47,255,.8)',borderWidth:1,pointRadius:5}]
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TTStyle,callbacks:{label:ctx=>`${ctx.raw.name}: ${ctx.raw.x} t/s, ${ctx.raw.y}s TTFT`}}},scales:{x:{title:{display:true,text:'Speed (tokens/s)',color:'#6a8aaa',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa'}},y:{title:{display:true,text:'Latency (s)',color:'#6a8aaa',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6a8aaa'}}}}
+    });
+}
+
+// ─── 3D VISUALIZATION ──────────────────────────────────────
+let threeScene, threeCamera, threeRenderer, threeControls, threeBars = [];
+function render3D(models) {
+    const container = document.getElementById('three-container');
+    const tooltip = document.getElementById('three-tooltip');
+    // Clean previous
+    if (threeRenderer) { container.removeChild(threeRenderer.domElement); threeRenderer.dispose(); }
+    threeBars = [];
+
+    const W = container.clientWidth, H = container.clientHeight;
+    threeScene = new THREE.Scene();
+    threeCamera = new THREE.PerspectiveCamera(50, W/H, 0.1, 1000);
+    threeCamera.position.set(18, 12, 18);
+    threeRenderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+    threeRenderer.setSize(W, H);
+    threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(threeRenderer.domElement);
+
+    threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+    threeControls.enableDamping = true;
+    threeControls.dampingFactor = 0.08;
+    threeControls.autoRotate = true;
+    threeControls.autoRotateSpeed = 0.5;
+
+    // Lights
+    threeScene.add(new THREE.AmbientLight(0x334466, 0.6));
+    const dLight = new THREE.DirectionalLight(0x00d4ff, 0.8);
+    dLight.position.set(10, 15, 10);
+    threeScene.add(dLight);
+    const pLight = new THREE.PointLight(0x7b2fff, 0.5, 50);
+    pLight.position.set(-5, 10, -5);
+    threeScene.add(pLight);
+
+    // Grid floor
+    const gridHelper = new THREE.GridHelper(30, 30, 0x0a2040, 0x0a1628);
+    threeScene.add(gridHelper);
+
+    // Create bars
+    const top15 = models.slice(0, 15);
+    const maxScore = Math.max(...top15.map(m=>m.score));
+    const cols = 5, spacing = 2.5;
+
+    top15.forEach((m, i) => {
+        const row = Math.floor(i/cols), col = i%cols;
+        const h = (m.score / maxScore) * 8;
+        const geo = new THREE.BoxGeometry(1.5, h, 1.5);
+        const hue = (m.score - 60) / 40;
+        const color = new THREE.Color().setHSL(0.55 - hue * 0.3, 0.8, 0.5);
+        const mat = new THREE.MeshPhongMaterial({color, transparent:true, opacity:0.85, shininess:80});
+        const bar = new THREE.Mesh(geo, mat);
+        bar.position.set(col*spacing - (cols*spacing/2) + spacing/2, h/2, row*spacing - 3);
+        bar.userData = {name:m.model_name, score:m.score, idx:i};
+        threeScene.add(bar);
+        threeBars.push(bar);
+
+        // Glow edge
+        const edgeGeo = new THREE.EdgesGeometry(geo);
+        const edgeMat = new THREE.LineBasicMaterial({color:0x00d4ff, transparent:true, opacity:0.3});
+        const edges = new THREE.LineSegments(edgeGeo, edgeMat);
+        edges.position.copy(bar.position);
+        threeScene.add(edges);
+    });
+
+    // Raycaster for hover
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    container.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / W) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / H) * 2 + 1;
+        raycaster.setFromCamera(mouse, threeCamera);
+        const hits = raycaster.intersectObjects(threeBars);
+        if (hits.length > 0) {
+            const d = hits[0].object.userData;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+            tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+            tooltip.innerHTML = `<b style="color:#00d4ff">${d.name}</b><br>Score: ${d.score}`;
+            hits[0].object.material.opacity = 1;
+        } else {
+            tooltip.style.display = 'none';
+            threeBars.forEach(b => b.material.opacity = 0.85);
+        }
+    });
+
+    // Animate
+    function animate3D() {
+        requestAnimationFrame(animate3D);
+        threeControls.update();
+        // Gentle float animation
+        threeBars.forEach((b,i) => {
+            b.position.y = b.userData.baseY + Math.sin(Date.now()*0.001 + i*0.5) * 0.08;
+        });
+        threeRenderer.render(threeScene, threeCamera);
+    }
+    threeBars.forEach(b => b.userData.baseY = b.position.y);
+    animate3D();
+
+    // Resize
+    window.addEventListener('resize', () => {
+        const nw = container.clientWidth, nh = container.clientHeight;
+        threeCamera.aspect = nw/nh;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(nw, nh);
+    });
+}
+
+// ─── MODEL COMPARISON ──────────────────────────────────────
+function renderComparisonPills(models) {
+    const c = document.getElementById('cmp-pills');
+    CMP_SEL.clear();
+    c.innerHTML = models.map(m =>
+        `<button class="cmp-btn" onclick="toggleCmp(this,'${m.model_name}')">${m.model_name}</button>`
+    ).join('');
+}
+function toggleCmp(btn, name) {
+    if (CMP_SEL.has(name)) { CMP_SEL.delete(name); btn.classList.remove('sel'); }
+    else if (CMP_SEL.size < 5) { CMP_SEL.add(name); btn.classList.add('sel'); }
+    updateCompareChart();
+}
+const CMP_COLORS = ['#00d4ff','#7b2fff','#ff6b9d','#00ff88','#ffd700'];
+function updateCompareChart() {
+    destroyChart('compare');
+    if (CMP_SEL.size < 2) return;
+    const sel = ALL_MODELS.filter(m => CMP_SEL.has(m.model_name));
+    CHARTS.compare = new Chart(document.getElementById('ch-compare'), {
+        type:'radar', data:{
+            labels:['Intelligence','Arena ELO','Cost','Speed','Latency','Context'],
+            datasets: sel.map((m,i) => ({
+                label:m.model_name,
+                data:[m.breakdown.intelligence, m.breakdown.arena_elo, m.breakdown.cost, m.breakdown.speed, m.breakdown.latency, m.breakdown.context],
+                backgroundColor:CMP_COLORS[i]+'18', borderColor:CMP_COLORS[i], pointBackgroundColor:CMP_COLORS[i], borderWidth:2
+            }))
+        }, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#6a8aaa',font:{family:'Space Grotesk',size:10},padding:12}},tooltip:TTStyle},scales:{r:{min:0,max:100,grid:{color:'rgba(255,255,255,.06)'},angleLines:{color:'rgba(255,255,255,.06)'},ticks:{display:false},pointLabels:{color:'#6a8aaa',font:{size:11}}}}}
+    });
+}
+
+// ─── MARKET MOVEMENTS ──────────────────────────────────────
+async function loadMovements() {
+    try {
+        const data = await fetch(`${API}/models/movements`).then(r=>r.json());
+        const items = [
+            ...(data.new_arrivals||[]).map(m=>({t:'new',name:m.name,det:`Detected ${m.first_seen?new Date(m.first_seen).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'recently'}`})),
+            ...(data.price_drops||[]).map(m=>({t:'drop',name:m.name,det:`$${m.old_cost} → $${m.new_cost}`,pct:m.drop_pct}))
+        ];
+        const c = document.getElementById('movements');
+        if (!items.length) {
+            c.innerHTML = `<div class="card p-6" style="color:var(--muted);grid-column:1/-1;">✅ All ${data.total_models} models stable — no significant movements detected.</div>`;
+        } else {
+            c.innerHTML = items.map(it => `
+                <div class="mv">
+                    <div class="mv-icon">${it.t==='new'?'✨':'💸'}</div>
+                    <div class="mv-info"><div class="mv-name">${it.name}</div><div class="mv-det">${it.det}</div></div>
+                    <span class="mv-badge ${it.t==='new'?'badge-new':'badge-drop'}">${it.t==='new'?'NEW':'-'+it.pct+'%'}</span>
+                </div>
+            `).join('');
+        }
+    } catch(e) {}
+}
+
+// ─── REPORT ────────────────────────────────────────────────
+async function genReport() {
+    const btn = document.getElementById('btn-gen');
+    btn.disabled = true; btn.textContent = 'Generating…';
+    try {
+        const r = await fetch(`${API}/report`);
+        CURRENT_REPORT = await r.text();
+        document.getElementById('rpt-content').textContent = CURRENT_REPORT;
+        document.getElementById('btn-dl').disabled = false;
+    } catch(e) { document.getElementById('rpt-content').textContent = 'Error: API unreachable.'; }
+    btn.disabled = false; btn.textContent = '⚡ Generate Report';
+}
+function dlReport() {
+    if (!CURRENT_REPORT) return;
+    const b = new Blob([CURRENT_REPORT], {type:'text/markdown'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = `epineon_digest_${new Date().toISOString().slice(0,10)}.md`;
+    a.click();
+}
+
+// ─── SCHEDULER ─────────────────────────────────────────────
+function updateScheduler(s) {
+    if (!s) return;
+    const fmt = iso => { if(!iso) return '—'; try{return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return iso} };
+    document.getElementById('run-count').innerHTML = `Total runs: <b style="color:var(--cyan)">${s.total_runs||0}</b>`;
+    document.getElementById('sch-grid').innerHTML = [
+        ['Status', s.last_status||'—'], ['Last Run', fmt(s.last_run)],
+        ['Next Run', fmt(s.next_run)], ['Reports', s.reports?.length||0]
+    ].map(([l,v]) => `<div class="sch-s"><div class="sch-l">${l}</div><div class="sch-v">${v}</div></div>`).join('');
+}
+async function triggerPipeline() {
+    const btn = document.getElementById('btn-run');
+    btn.disabled = true; btn.textContent = 'Running…';
+    try { await fetch(`${API}/scheduler/run`,{method:'POST'}); } catch{}
+    setTimeout(async () => {
+        btn.disabled = false; btn.textContent = '▶ Run Pipeline Now';
+        const s = await fetch(`${API}/scheduler/status`).then(r=>r.json()).catch(()=>null);
+        if(s) updateScheduler(s);
+    }, 3000);
+}
+
+// ─── NEURAL BACKGROUND ─────────────────────────────────────
+(function(){
+    const c=document.getElementById('bg-canvas'),x=c.getContext('2d');let w,h,pts=[];
+    const r=()=>{w=c.width=innerWidth;h=c.height=innerHeight;};r();addEventListener('resize',r);
+    class P{constructor(){this.x=Math.random()*w;this.y=Math.random()*h;this.vx=(Math.random()-.5)*.4;this.vy=(Math.random()-.5)*.4;}
+    up(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>w)this.vx*=-1;if(this.y<0||this.y>h)this.vy*=-1;}
+    dr(){x.beginPath();x.arc(this.x,this.y,1,0,7);x.fillStyle='rgba(0,212,255,.3)';x.fill();}}
+    for(let i=0;i<55;i++)pts.push(new P());
+    !function anim(){x.clearRect(0,0,w,h);pts.forEach(p=>{p.up();p.dr();});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){let d=Math.sqrt((pts[i].x-pts[j].x)**2+(pts[i].y-pts[j].y)**2);
+    if(d<140){x.beginPath();x.moveTo(pts[i].x,pts[i].y);x.lineTo(pts[j].x,pts[j].y);x.strokeStyle=`rgba(0,212,255,${.08*(1-d/140)})`;x.stroke();}}
+    requestAnimationFrame(anim);}();
+})();
+
+init();
 </script>
 </body>
 </html>
