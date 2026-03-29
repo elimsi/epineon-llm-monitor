@@ -1,6 +1,6 @@
 # ⚡ EPINEON AI: Elite LLM Intelligence Control Center
 
-> **ESITH Technical Challenge 2026** — *Ultimate Version*
+> **ESITH Technical Challenge 2026** — 
 > Designed by EL KHOBZI Ismail
 
 EPINEON AI is an enterprise-grade ecosystem developed to autonomously collect, score, and recommend Large Language Models (LLMs) for commercial deployment. It goes beyond simple leaderboards by implementing advanced mathematical modeling (Shannon Entropy + VIKOR) to provide objective, data-driven model recommendations based on specific enterprise use cases.
