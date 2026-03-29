@@ -1,3 +1,12 @@
+---
+title: EPINEON AI Control Center
+emoji: ⚡
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # ⚡ EPINEON AI: Elite LLM Intelligence Control Center
 
 > **ESITH Technical Challenge 2026** — 
