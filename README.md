@@ -92,7 +92,3 @@ Once the server boots up, open your browser and navigate to:
 | `/scheduler/run` | `POST` | Manually triggers the OpenRouter Async pipeline. |
 | `/report` | `GET` | Generates a Markdown digest summarizing market leaders. |
 | `/ws/pipeline` | `WS` | WebSocket endpoint streaming engine activity logs. |
-
----
-
-*Mission achieved. The LLM Monitoring Challenge has been crushed.* 🏁
