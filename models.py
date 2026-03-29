@@ -9,14 +9,30 @@ class LLMModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
-    intelligence_score = Column(Float, nullable=True) # Normalized 0-100
-    price_input_token = Column(Float, nullable=True) # Per 1M tokens
-    price_output_token = Column(Float, nullable=True) # Per 1M tokens
-    speed_tokens_per_sec = Column(Float, nullable=True)
-    ttft_latency = Column(Float, nullable=True) # Time To First Token
-    context_window = Column(Integer, nullable=True)
-    license_type = Column(String, nullable=True)
     
-    last_updated = Column(DateTime, default=datetime.utcnow)
+    # Core performance metrics
+    intelligence_score = Column(Float, nullable=True)       # Normalized 0-100 (from benchmarks)
+    arena_elo = Column(Integer, nullable=True)              # LMSYS Chatbot Arena ELO rating
     
-    # Check if a model is "newly detected" by comparing last_updated
+    # Pricing (per 1M tokens, in USD)
+    price_input_token = Column(Float, nullable=True)
+    price_output_token = Column(Float, nullable=True)
+    previous_price_input = Column(Float, nullable=True)     # For tracking price drops
+    previous_price_output = Column(Float, nullable=True)    # For tracking price drops
+    
+    # Speed & latency
+    speed_tokens_per_sec = Column(Float, nullable=True)     # Output tokens per second
+    ttft_latency = Column(Float, nullable=True)             # Time To First Token (seconds)
+    
+    # Capacity
+    context_window = Column(Integer, nullable=True)         # Max tokens
+    
+    # Licensing
+    license_type = Column(String, nullable=True)            # Proprietary, Apache 2.0, MIT, etc.
+    
+    # Tracking
+    first_seen = Column(DateTime, default=datetime.utcnow)  # When this model was first added
+    last_updated = Column(DateTime, default=datetime.utcnow) # Last data refresh
+    
+    # Data source attribution
+    data_source = Column(String, nullable=True)             # e.g. "Artificial Analysis, LMSYS Arena"

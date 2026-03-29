@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPINEON AI | LLM Intelligence Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#040d1a;--bg2:#071428;--glass:rgba(255,255,255,0.04);--border:rgba(0,212,255,0.15);--border-hover:rgba(0,212,255,0.4);--cyan:#00d4ff;--purple:#7b2fff;--pink:#ff6b9d;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;--text:#e8f0fe;--muted:#8899bb;--green:#00ff88;--red:#ff4d6d}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.container{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:2rem 2.5rem}
+
+/* HEADER */
+header{text-align:center;padding:3rem 0 2rem}
+.pill{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(123,47,255,.1));border:1px solid var(--border);border-radius:100px;padding:.35rem 1.1rem;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.5rem;animation:fadeDown .7s ease both}
+h1{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(2.2rem,5.5vw,4.2rem);background:linear-gradient(135deg,#00d4ff 10%,#7b2fff 60%,#ff6b9d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;letter-spacing:.03em;margin-bottom:.9rem;animation:fadeDown .7s .1s ease both}
+.subtitle{color:var(--muted);font-size:.97rem;font-weight:300;animation:fadeDown .7s .2s ease both}
+.status-pill{display:inline-flex;align-items:center;gap:.6rem;border-radius:100px;padding:.35rem 1rem;font-size:.72rem;margin-top:1.1rem;border:1px solid rgba(0,255,136,.3);background:rgba(0,255,136,.07);color:var(--green);animation:fadeIn 1s .5s ease both}
+.status-pill.offline{border-color:rgba(255,77,109,.3);background:rgba(255,77,109,.07);color:var(--red)}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.5s ease-in-out infinite}
+
+/* GLASS CARD */
+.card{background:var(--glass);border:1px solid var(--border);border-radius:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);transition:border-color .3s,box-shadow .3s}
+.card:hover{border-color:var(--border-hover);box-shadow:0 0 30px rgba(0,212,255,.12)}
+
+/* CONTROLS */
+.controls{display:flex;gap:1.5rem;margin:2rem 0;flex-wrap:wrap;animation:fadeUp .7s .3s ease both}
+.ctrl-card{flex:1;min-width:260px;padding:1.5rem}
+.ctrl-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.18em;color:var(--cyan);font-weight:600;margin-bottom:.85rem}
+.profile-grid{display:flex;flex-wrap:wrap;gap:.5rem}
+.pb{background:rgba(0,212,255,.04);border:1px solid rgba(0,212,255,.18);border-radius:10px;padding:.55rem 1rem;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-size:.82rem;cursor:pointer;transition:all .22s;white-space:nowrap}
+.pb:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.08)}
+.pb.active{background:linear-gradient(135deg,rgba(0,212,255,.18),rgba(123,47,255,.18));border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 18px rgba(0,212,255,.22);font-weight:600}
+
+/* TOGGLE */
+.trow{display:flex;align-items:center;gap:.9rem;margin-bottom:.85rem}
+.toggle{position:relative;width:50px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.08);border-radius:26px;border:1px solid rgba(255,255,255,.1);transition:.3s}
+.slider::before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.slider{background:linear-gradient(135deg,var(--cyan),var(--purple));border-color:transparent}
+input:checked+.slider::before{transform:translateX(24px)}
+.tlabel{font-size:.83rem;color:var(--muted)}
+
+/* STATS BAR */
+.statbar{display:flex;gap:.75rem;flex-wrap:wrap;margin:0 0 2rem;animation:fadeUp .7s .4s ease both}
+.statpill{background:var(--glass);border:1px solid var(--border);border-radius:100px;padding:.45rem 1.1rem;font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:.45rem}
+.statpill b{color:var(--cyan);font-weight:600}
+
+/* SECTION TITLE */
+.stitle{font-family:'Orbitron',monospace;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1.4rem;display:flex;align-items:center;gap:1rem}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+/* PODIUM */
+.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-bottom:3rem;animation:fadeUp .7s .5s ease both}
+.mcard{position:relative;border-radius:24px;padding:2rem 1.5rem;text-align:center;cursor:default;overflow:hidden;background:var(--glass);border:1px solid var(--border);transition:border-color .3s,box-shadow .3s;transform-style:preserve-3d}
+.mcard.r1{border-color:rgba(255,215,0,.3);background:linear-gradient(160deg,rgba(255,215,0,.05),rgba(5,13,26,.8))}
+.mcard.r2{border-color:rgba(192,192,192,.25)}
+.mcard.r3{border-color:rgba(205,127,50,.25)}
+.rbadge{position:absolute;top:1rem;right:1rem;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700}
+.r1 .rbadge{background:linear-gradient(135deg,#ffd700,#ff9500);color:#000;box-shadow:0 0 14px rgba(255,215,0,.5)}
+.r2 .rbadge{background:linear-gradient(135deg,#d0d0d0,#888);color:#000}
+.r3 .rbadge{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff}
+.ring-wrap{position:relative;width:100px;height:100px;margin:0 auto 1.4rem}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:6}
+.ring-fill{fill:none;stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 1.6s cubic-bezier(.4,0,.2,1)}
+.r1 .ring-fill{stroke:url(#gGold)}.r2 .ring-fill{stroke:url(#gSilver)}.r3 .ring-fill{stroke:url(#gBronze)}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-val{font-family:'Orbitron',monospace;font-size:1.35rem;font-weight:700;line-height:1}
+.ring-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.r1 .ring-val{color:var(--gold)}.r2 .ring-val{color:var(--silver)}.r3 .ring-val{color:var(--bronze)}
+.mname{font-size:.98rem;font-weight:600;margin-bottom:.45rem}
+.mlicense{display:inline-block;background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.15);border-radius:6px;padding:.2rem .6rem;font-size:.62rem;color:var(--cyan);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.6rem}
+.mjust{font-size:.65rem;color:var(--muted);font-style:italic;margin-bottom:1rem;min-height:2.4em;line-height:1.4}
+.mmetrics{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;text-align:left}
+.mm{background:rgba(255,255,255,.03);border-radius:10px;padding:.5rem .7rem}
+.mmk{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.1rem}
+.mmv{font-size:.8rem;font-weight:600}
+
+/* TABLE */
+.table-wrap{margin-bottom:3rem;animation:fadeUp .7s .6s ease both}
+table{width:100%;border-collapse:separate;border-spacing:0 .4rem}
+thead th{text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);padding:.65rem 1rem;font-weight:500;white-space:nowrap}
+tbody tr{background:var(--glass);transition:all .2s}
+tbody tr:hover{background:rgba(0,212,255,.05);transform:translateX(3px)}
+td{padding:.85rem 1rem;font-size:.83rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+td:first-child{border-left:1px solid var(--border);border-radius:12px 0 0 12px;padding-left:1.3rem}
+td:last-child{border-right:1px solid var(--border);border-radius:0 12px 12px 0}
+.rnum{font-family:'Orbitron',monospace;font-weight:700;font-size:.85rem;color:var(--muted)}
+.sbar-wrap{display:flex;align-items:center;gap:.7rem}
+.sbar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:3px;width:0;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width 1s cubic-bezier(.4,0,.2,1)}
+.sval{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:600;color:var(--cyan);min-width:38px}
+.tag{font-size:.65rem;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:5px;padding:.15rem .5rem;white-space:nowrap}
+
+/* CHARTS */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:3rem;animation:fadeUp .7s .7s ease both}
+.chart-card{padding:2rem}
+.chart-title{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
+
+/* MOVEMENTS */
+.movements{margin-bottom:3rem;animation:fadeUp .7s .8s ease both}
+.mv-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.mv-item{display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(255,255,255,.02);border-radius:12px;border:1px solid rgba(255,255,255,.05)}
+.mv-icon{font-size:1.6rem}
+.mv-name{font-weight:600;font-size:.88rem}
+.mv-detail{font-size:.72rem;color:var(--muted)}
+.mv-badge{font-size:.65rem;padding:.2rem .6rem;border-radius:6px;font-weight:600}
+.mv-new{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.mv-drop{background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.3)}
+
+/* COMPARE */
+.compare-section{margin-bottom:3rem;animation:fadeUp .7s .75s ease both}
+.compare-select{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem}
+.cb{background:rgba(123,47,255,.04);border:1px solid rgba(123,47,255,.18);border-radius:8px;padding:.4rem .8rem;font-size:.75rem;color:var(--muted);cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .2s}
+.cb:hover{border-color:var(--purple);color:var(--purple)}
+.cb.sel{background:rgba(123,47,255,.18);border-color:var(--purple);color:#d4b8ff;font-weight:600}
+
+/* REPORT */
+.report-section{margin-bottom:3rem;animation:fadeUp .7s .85s ease both}
+.report-preview{max-height:400px;overflow-y:auto;padding:1.5rem;font-size:.82rem;line-height:1.7;white-space:pre-wrap;font-family:'Space Grotesk',monospace;color:var(--muted)}
+.report-actions{display:flex;gap:.8rem;margin-top:1rem}
+.rbtn{padding:.7rem 1.4rem;border-radius:12px;border:none;font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .25s}
+.rbtn-primary{background:linear-gradient(135deg,var(--cyan),var(--purple));color:#fff}
+.rbtn-primary:hover{box-shadow:0 0 25px rgba(0,212,255,.4);transform:translateY(-2px)}
+.rbtn-secondary{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border)}
+.rbtn-secondary:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* LOADER */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;gap:1rem}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,212,255,.1);border-top-color:var(--cyan);animation:spin .75s linear infinite}
+.ltxt{color:var(--muted);font-size:.82rem;letter-spacing:.1em}
+
+/* ERROR */
+.errbox{text-align:center;padding:3rem}
+.errbox .eico{font-size:2.8rem;margin-bottom:.8rem}
+.errbox h3{color:var(--red);margin-bottom:.5rem}
+.errbox p{color:var(--muted);font-size:.85rem;margin-bottom:.8rem}
+code{background:rgba(255,77,109,.1);border:1px solid rgba(255,77,109,.2);border-radius:6px;padding:.25rem .6rem;font-size:.8rem;color:var(--red)}
+
+footer{text-align:center;padding:2rem 0 3rem;color:var(--muted);font-size:.78rem}
+footer a{color:var(--cyan);text-decoration:none}
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+@media(max-width:900px){.podium,.charts,.mv-grid{grid-template-columns:1fr}.controls{flex-direction:column}.container{padding:1rem 1.2rem}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:3px}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<svg width="0" height="0" style="position:absolute"><defs>
+<linearGradient id="gGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffd700"/><stop offset="100%" stop-color="#ff9500"/></linearGradient>
+<linearGradient id="gSilver" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e0e0e0"/><stop offset="100%" stop-color="#888"/></linearGradient>
+<linearGradient id="gBronze" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#cd7f32"/><stop offset="100%" stop-color="#8b4513"/></linearGradient>
+</defs></svg>
+
+<div class="container">
+<header>
+  <div class="pill">⚡ EPINEON AI Research · Challenge 2026</div>
+  <h1>LLM INTELLIGENCE<br>MONITOR</h1>
+  <p class="subtitle">Real-time scoring, comparison & reporting for Enterprise AI deployment</p>
+  <div class="status-pill" id="status-pill"><div class="dot"></div><span id="status-txt">Connecting…</span></div>
+</header>
+
+<div class="controls">
+  <div class="card ctrl-card">
+    <div class="ctrl-label">📊 Enterprise Profile</div>
+    <div class="profile-grid" id="profile-grid"><span class="ltxt">Loading…</span></div>
+  </div>
+  <div class="card ctrl-card" style="flex:0 0 290px">
+    <div class="ctrl-label">⚙️ Settings</div>
+    <div class="trow"><label class="toggle"><input type="checkbox" id="t-commercial"><span class="slider"></span></label><span class="tlabel">Commercial only</span></div>
+    <div class="trow"><label class="toggle"><input type="checkbox" id="t-neural" checked><span class="slider"></span></label><span class="tlabel">Neural background</span></div>
+  </div>
+</div>
+
+<div class="statbar">
+  <div class="statpill">Models: <b id="s-count">—</b></div>
+  <div class="statpill">Profile: <b id="s-profile">—</b></div>
+  <div class="statpill">Top Score: <b id="s-top">—</b></div>
+  <div class="statpill">Arena Top: <b id="s-elo">—</b></div>
+  <div class="statpill">Updated: <b id="s-time">—</b></div>
+</div>
+
+<div class="stitle">🏆 Top Recommendations</div>
+<div class="podium" id="podium"><div class="loader" style="grid-column:span 3"><div class="spin"></div><div class="ltxt">Scoring…</div></div></div>
+
+<div class="table-wrap">
+  <div class="stitle">📋 Full Rankings</div>
+  <div class="card" style="padding:0;overflow:auto">
+    <table><thead><tr><th style="padding-left:1.3rem">#</th><th>Model</th><th>Score</th><th>Intel</th><th>Arena ELO</th><th>Cost/1M</th><th>Speed</th><th>Context</th><th>License</th></tr></thead>
+    <tbody id="tbody"><tr><td colspan="9"><div class="loader"><div class="spin"></div></div></td></tr></tbody></table>
+  </div>
+</div>
+
+<div class="charts">
+  <div class="card chart-card"><div class="chart-title">📡 Composite Score — Top 7</div><canvas id="bar-chart" height="230"></canvas></div>
+  <div class="card chart-card"><div class="chart-title">🕸️ Top 3 — Multi-Dimension Radar</div><canvas id="radar-chart" height="230"></canvas></div>
+</div>
+
+<div class="charts">
+  <div class="card chart-card"><div class="chart-title">💰 Cost vs Intelligence — Efficiency Frontier</div><canvas id="bubble-chart" height="260"></canvas></div>
+  <div class="card chart-card"><div class="chart-title">🏟️ LMSYS Arena ELO Rankings</div><canvas id="elo-chart" height="260"></canvas></div>
+</div>
+
+<div class="compare-section">
+  <div class="stitle">⚔️ Model Comparison</div>
+  <div class="card" style="padding:1.5rem">
+    <div class="ctrl-label">Select models to compare (click to toggle)</div>
+    <div class="compare-select" id="compare-select"></div>
+    <canvas id="compare-chart" height="200"></canvas>
+  </div>
+</div>
+
+<div class="movements">
+  <div class="stitle">📈 Market Movements</div>
+  <div class="mv-grid" id="mv-grid"><div class="ltxt" style="grid-column:span 2;text-align:center;padding:2rem">Loading movements…</div></div>
+</div>
+
+<div class="report-section">
+  <div class="stitle">📄 Auto-Generated Digest Report</div>
+  <div class="card" style="padding:0">
+    <div class="report-preview" id="report-preview">Click "Generate Report" to create a full analysis digest…</div>
+    <div class="report-actions" style="padding:1rem 1.5rem">
+      <button class="rbtn rbtn-primary" onclick="genReport()">⚡ Generate Report</button>
+      <button class="rbtn rbtn-secondary" onclick="downloadReport()">📥 Download .md</button>
+    </div>
+  </div>
+</div>
+
+<footer>Built for <a href="#">EPINEON AI Technical Challenge 2026</a> · FastAPI + SQLite + Chart.js · Data: Artificial Analysis, LMSYS Arena, HuggingFace, OpenRouter</footer>
+</div>
+
+<script>
+const API='http://127.0.0.1:8000',CIRC=2*Math.PI*44;
+let currentProfile=null,allRecs=[],barChart=null,radarChart=null,bubbleChart=null,eloChart=null,compareChart=null,compareSet=new Set(),reportMd='',neuralOn=true;
+const bgC=document.getElementById('bg-canvas'),bgX=bgC.getContext('2d');let dots=[];
+function rBg(){bgC.width=innerWidth;bgC.height=innerHeight}
+class D{constructor(){this.reset()}reset(){this.x=Math.random()*bgC.width;this.y=Math.random()*bgC.height;this.vx=(Math.random()-.5)*.35;this.vy=(Math.random()-.5)*.35;this.r=Math.random()*1.8+.8;this.a=Math.random()*.45+.1;this.ph=Math.random()*Math.PI*2}tick(){this.x+=this.vx;this.y+=this.vy;this.ph+=.018;if(this.x<0||this.x>bgC.width)this.vx*=-1;if(this.y<0||this.y>bgC.height)this.vy*=-1}draw(){bgX.beginPath();bgX.arc(this.x,this.y,this.r,0,Math.PI*2);bgX.fillStyle=`rgba(0,212,255,${Math.max(0,this.a+Math.sin(this.ph)*.08)})`;bgX.fill()}}
+function bDots(){dots=Array.from({length:Math.min(80,~~(bgC.width*bgC.height/12000))},()=>new D)}
+(function loop(){bgX.clearRect(0,0,bgC.width,bgC.height);if(neuralOn){for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<140){bgX.beginPath();bgX.moveTo(dots[i].x,dots[i].y);bgX.lineTo(dots[j].x,dots[j].y);bgX.strokeStyle=`rgba(0,212,255,${(1-d/140)*.18})`;bgX.lineWidth=.6;bgX.stroke()}}dots.forEach(p=>{p.tick();p.draw()})}requestAnimationFrame(loop)})();
+rBg();bDots();addEventListener('resize',()=>{rBg();bDots()});
+document.addEventListener('mousemove',e=>{if(!neuralOn)return;dots.forEach(p=>{const dx=e.clientX-p.x,dy=e.clientY-p.y;if(Math.sqrt(dx*dx+dy*dy)<130){p.vx+=dx*.00025;p.vy+=dy*.00025}})});
+document.getElementById('t-neural').addEventListener('change',e=>{neuralOn=e.target.checked});
+
+function setStatus(ok,msg){document.getElementById('status-pill').className='status-pill'+(ok?'':' offline');document.getElementById('status-txt').textContent=msg}
+function buildPBs(ps){const g=document.getElementById('profile-grid');g.innerHTML='';ps.forEach(p=>{const b=document.createElement('button');b.className='pb'+(p===currentProfile?' active':'');b.textContent=p;b.onclick=()=>selProfile(p);g.appendChild(b)})}
+function selProfile(p){currentProfile=p;document.querySelectorAll('.pb').forEach(b=>b.classList.toggle('active',b.textContent===p));document.getElementById('s-profile').textContent=p;loadData()}
+document.getElementById('t-commercial').addEventListener('change',()=>{if(currentProfile)loadData()});
+
+(async function init(){try{const r=await fetch(`${API}/profiles`);const j=await r.json();buildPBs(j.profiles);setStatus(true,`Connected · ${j.profiles.length} profiles · v2.0`);selProfile(j.profiles[0]);loadMovements()}catch(e){setStatus(false,'API offline — run uvicorn first');showErr()}})();
+
+async function loadData(){const c=document.getElementById('t-commercial').checked;
+document.getElementById('podium').innerHTML='<div class="loader" style="grid-column:span 3"><div class="spin"></div></div>';
+document.getElementById('tbody').innerHTML='<tr><td colspan="9"><div class="loader"><div class="spin"></div></div></td></tr>';
+try{const r=await fetch(`${API}/recommend?profile=${encodeURIComponent(currentProfile)}&commercial=${c}&top_k=33`);const j=await r.json();allRecs=j.recommendations;
+document.getElementById('s-count').textContent=allRecs.length;
+document.getElementById('s-top').textContent=allRecs[0]?.score??'—';
+document.getElementById('s-elo').textContent=allRecs[0]?.arena_elo??'—';
+document.getElementById('s-time').textContent=new Date().toLocaleTimeString();
+renderPodium(allRecs.slice(0,3));renderTable(allRecs);renderCharts(allRecs);renderCompareButtons(allRecs)}catch(e){showErr()}}
+
+const RCLS=['r1','r2','r3'],RLBL=['1ST','2ND','3RD'],CF=v=>v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'K';
+function renderPodium(ms){const p=document.getElementById('podium');p.innerHTML='';ms.forEach((m,i)=>{const off=CIRC-(m.score/100)*CIRC;const c=document.createElement('div');c.className=`mcard ${RCLS[i]}`;c.innerHTML=`<div class="rbadge">${RLBL[i]}</div><div class="ring-wrap"><svg class="ring-svg" width="100" height="100" viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="44"/><circle class="ring-fill" cx="50" cy="50" r="44" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC}" data-off="${off}"/></svg><div class="ring-inner"><div class="ring-val">${m.score}</div><div class="ring-lbl">/ 100</div></div></div><div class="mname">${m.model_name}</div><div class="mlicense">${m.license}</div><div class="mjust">${m.justification||''}</div><div class="mmetrics"><div class="mm"><div class="mmk">🧠 Intelligence</div><div class="mmv">${m.intelligence_score}</div></div><div class="mm"><div class="mmk">🏟️ Arena ELO</div><div class="mmv">${m.arena_elo||'N/A'}</div></div><div class="mm"><div class="mmk">💰 Cost/1M</div><div class="mmv">$${m.cost_per_1m_tokens}</div></div><div class="mm"><div class="mmk">⚡ Speed</div><div class="mmv">${m.speed_tokens_sec} t/s</div></div></div>`;p.appendChild(c);
+setTimeout(()=>{c.querySelector('.ring-fill').style.strokeDashoffset=off},80+i*180);
+c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(650px) rotateY(${x*14}deg) rotateX(${-y*14}deg) translateY(-10px) scale(1.02)`;c.style.boxShadow=i===0?`0 25px 60px rgba(0,0,0,.6),0 0 40px rgba(255,215,0,${.15+Math.abs(x)*.2})`:`0 25px 60px rgba(0,0,0,.5),0 0 30px rgba(0,212,255,${.1+Math.abs(x)*.15})`});
+c.addEventListener('mouseleave',()=>{c.style.transform='';c.style.boxShadow=''})})}
+
+function renderTable(ms){const t=document.getElementById('tbody');t.innerHTML='';const mx=ms[0]?.score||1;ms.forEach((m,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td style="padding-left:1.3rem"><span class="rnum">${i+1}</span></td><td style="font-weight:600">${m.model_name}</td><td><div class="sbar-wrap"><div class="sbar"><div class="sbar-fill" data-w="${(m.score/mx*100).toFixed(1)}"></div></div><span class="sval">${m.score}</span></div></td><td>${m.intelligence_score}</td><td>${m.arena_elo||'—'}</td><td>$${m.cost_per_1m_tokens}</td><td>${m.speed_tokens_sec} t/s</td><td>${CF(m.context_window)}</td><td><span class="tag">${m.license}</span></td>`;t.appendChild(tr);setTimeout(()=>{tr.querySelector('.sbar-fill').style.width=tr.querySelector('.sbar-fill').dataset.w+'%'},40+i*50)})}
+
+const TT={backgroundColor:'rgba(4,13,26,.95)',borderColor:'rgba(0,212,255,.3)',borderWidth:1,titleColor:'#00d4ff',bodyColor:'#e8f0fe'},TS={color:'#8899bb',font:{family:'Space Grotesk',size:10}};
+
+function renderCharts(ms){
+// BAR
+if(barChart)barChart.destroy();const bC=document.getElementById('bar-chart').getContext('2d');const g=bC.createLinearGradient(0,0,500,0);g.addColorStop(0,'rgba(0,212,255,.85)');g.addColorStop(1,'rgba(123,47,255,.85)');
+const t7=ms.slice(0,7),nm=t7.map(m=>m.model_name.length>14?m.model_name.slice(0,14)+'…':m.model_name);
+barChart=new Chart(bC,{type:'bar',data:{labels:nm,datasets:[{label:'Score',data:t7.map(m=>m.score),backgroundColor:g,borderRadius:9,borderSkipped:false}]},options:{responsive:true,animation:{duration:900},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:TS},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:TS,min:Math.max(0,Math.min(...t7.map(m=>m.score))-10),max:100}},plugins:{legend:{display:false},tooltip:{...TT}}}});
+
+// RADAR
+if(radarChart)radarChart.destroy();const rC=document.getElementById('radar-chart').getContext('2d');const t3=ms.slice(0,3);
+const CO=[{b:'rgba(0,212,255,.75)',bg:'rgba(0,212,255,.07)'},{b:'rgba(192,192,192,.7)',bg:'rgba(192,192,192,.05)'},{b:'rgba(205,127,50,.7)',bg:'rgba(205,127,50,.05)'}];
+radarChart=new Chart(rC,{type:'radar',data:{labels:['Intelligence','Arena ELO','Affordability','Speed','Low Latency','Context'],datasets:t3.map((m,i)=>({label:m.model_name.length>15?m.model_name.slice(0,15)+'…':m.model_name,data:[m.breakdown?.intelligence||0,m.breakdown?.arena_elo||0,m.breakdown?.cost||0,m.breakdown?.speed||0,m.breakdown?.latency||0,m.breakdown?.context||0],borderColor:CO[i].b,backgroundColor:CO[i].bg,pointBackgroundColor:CO[i].b,pointRadius:4,borderWidth:2}))},options:{responsive:true,scales:{r:{grid:{color:'rgba(255,255,255,.06)'},angleLines:{color:'rgba(255,255,255,.06)'},pointLabels:{color:'#8899bb',font:{family:'Space Grotesk',size:10}},ticks:{display:false},min:0,max:100}},plugins:{legend:{labels:{color:'#8899bb',font:{family:'Space Grotesk',size:10},boxWidth:11}},tooltip:TT}}});
+
+// BUBBLE (Cost vs Intel)
+if(bubbleChart)bubbleChart.destroy();const buC=document.getElementById('bubble-chart').getContext('2d');
+bubbleChart=new Chart(buC,{type:'bubble',data:{datasets:[{label:'Models',data:ms.map(m=>({x:m.cost_per_1m_tokens,y:m.intelligence_score,r:Math.max(3,m.speed_tokens_sec/30),name:m.model_name})),backgroundColor:'rgba(0,212,255,.35)',borderColor:'rgba(0,212,255,.8)',borderWidth:1}]},options:{responsive:true,scales:{x:{title:{display:true,text:'Cost / 1M tokens ($)',color:'#8899bb'},grid:{color:'rgba(255,255,255,.04)'},ticks:TS},y:{title:{display:true,text:'Intelligence Score',color:'#8899bb'},grid:{color:'rgba(255,255,255,.04)'},ticks:TS,min:65,max:100}},plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:c=>`${c.raw.name}: Intel ${c.raw.y}, Cost $${c.raw.x}`}}}}});
+
+// ELO BAR
+if(eloChart)eloChart.destroy();const eC=document.getElementById('elo-chart').getContext('2d');
+const elo=ms.filter(m=>m.arena_elo).sort((a,b)=>b.arena_elo-a.arena_elo).slice(0,10);
+const eg=eC.createLinearGradient(0,0,0,300);eg.addColorStop(0,'rgba(123,47,255,.85)');eg.addColorStop(1,'rgba(255,107,157,.85)');
+eloChart=new Chart(eC,{type:'bar',data:{labels:elo.map(m=>m.model_name.length>14?m.model_name.slice(0,14)+'…':m.model_name),datasets:[{label:'ELO',data:elo.map(m=>m.arena_elo),backgroundColor:eg,borderRadius:7,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,animation:{duration:900},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:TS,min:Math.min(...elo.map(m=>m.arena_elo))-30},y:{grid:{display:false},ticks:{...TS,font:{family:'Space Grotesk',size:9}}}},plugins:{legend:{display:false},tooltip:{...TT}}}});
+}
+
+// COMPARE
+function renderCompareButtons(ms){const w=document.getElementById('compare-select');w.innerHTML='';ms.slice(0,15).forEach(m=>{const b=document.createElement('button');b.className='cb'+(compareSet.has(m.model_name)?' sel':'');b.textContent=m.model_name;b.onclick=()=>{if(compareSet.has(m.model_name)){compareSet.delete(m.model_name);b.classList.remove('sel')}else if(compareSet.size<5){compareSet.add(m.model_name);b.classList.add('sel')}renderCompareChart()};w.appendChild(b)})}
+
+function renderCompareChart(){if(compareChart)compareChart.destroy();if(compareSet.size<2)return;
+const sel=allRecs.filter(m=>compareSet.has(m.model_name));const cc=document.getElementById('compare-chart').getContext('2d');
+const colors=['rgba(0,212,255,.75)','rgba(123,47,255,.75)','rgba(255,107,157,.75)','rgba(0,255,136,.75)','rgba(255,215,0,.75)'];
+compareChart=new Chart(cc,{type:'radar',data:{labels:['Intelligence','Arena ELO','Affordability','Speed','Low Latency','Context'],datasets:sel.map((m,i)=>({label:m.model_name,data:[m.breakdown?.intelligence||0,m.breakdown?.arena_elo||0,m.breakdown?.cost||0,m.breakdown?.speed||0,m.breakdown?.latency||0,m.breakdown?.context||0],borderColor:colors[i%5],backgroundColor:colors[i%5].replace('.75','.06'),pointRadius:4,borderWidth:2}))},options:{responsive:true,scales:{r:{grid:{color:'rgba(255,255,255,.06)'},angleLines:{color:'rgba(255,255,255,.06)'},pointLabels:{color:'#8899bb',font:{family:'Space Grotesk',size:10}},ticks:{display:false},min:0,max:100}},plugins:{legend:{labels:{color:'#8899bb',font:{family:'Space Grotesk',size:10},boxWidth:11}},tooltip:TT}}})}
+
+// MOVEMENTS
+async function loadMovements(){try{const r=await fetch(`${API}/models/movements`);const j=await r.json();const g=document.getElementById('mv-grid');g.innerHTML='';
+if(j.new_arrivals.length)j.new_arrivals.forEach(m=>{g.innerHTML+=`<div class="mv-item"><div class="mv-icon">✨</div><div><div class="mv-name">${m.name}</div><div class="mv-detail">Detected ${m.first_seen?new Date(m.first_seen).toLocaleDateString():'recently'}</div></div><span class="mv-badge mv-new">NEW</span></div>`});
+if(j.price_drops.length)j.price_drops.forEach(m=>{g.innerHTML+=`<div class="mv-item"><div class="mv-icon">💸</div><div><div class="mv-name">${m.name}</div><div class="mv-detail">$${m.old_cost} → $${m.new_cost}</div></div><span class="mv-badge mv-drop">-${m.drop_pct}%</span></div>`});
+if(!j.new_arrivals.length&&!j.price_drops.length)g.innerHTML='<div class="ltxt" style="grid-column:span 2;text-align:center;padding:2rem">No significant movements detected. All models stable. ✅</div>';
+g.innerHTML+=`<div class="mv-item"><div class="mv-icon">📊</div><div><div class="mv-name">Total Models Tracked</div><div class="mv-detail">Across all providers</div></div><span class="mv-badge mv-new">${j.total_models}</span></div>`}catch(e){}}
+
+// REPORT
+async function genReport(){document.getElementById('report-preview').textContent='Generating digest…';
+try{const r=await fetch(`${API}/report`);reportMd=await r.text();document.getElementById('report-preview').textContent=reportMd}catch(e){document.getElementById('report-preview').textContent='Error: API not reachable'}}
+function downloadReport(){if(!reportMd){alert('Generate the report first!');return}const b=new Blob([reportMd],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`epineon_digest_${new Date().toISOString().slice(0,10)}.md`;a.click()}
+
+function showErr(){document.getElementById('podium').innerHTML='<div class="errbox" style="grid-column:span 3"><div class="eico">🔌</div><h3>API Not Reachable</h3><p>Start the backend:</p><code>python -m uvicorn main:app --reload</code><p style="margin-top:.75rem">Then refresh this page.</p></div>';document.getElementById('tbody').innerHTML='<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--muted)">No data</td></tr>'}
+</script>
+</body>
+</html>

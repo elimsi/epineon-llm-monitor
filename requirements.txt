@@ -6,3 +6,4 @@ pydantic>=2.6.0
 sqlalchemy>=2.0.28
 pandas>=2.2.0
 apscheduler>=3.10.0
+schedule>=1.2.0
